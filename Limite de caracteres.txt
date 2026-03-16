@@ -1,0 +1,31 @@
+Observaciones de rechazos 500
+Número documento 100
+Dependencia 100
+Correo electrónico 70
+
+Curp 18
+Nombre(s) 30
+Primer apellido 30
+Primer apellido 30
+Entidad federativa de nacimiento 100
+
+Nombre(s) del padre 30
+Primer apellido 30
+Segundo apellido 30
+
+Nombre(s) del madre 30
+Primer apellido 30
+Segundo apellido 30
+
+Curp identidad 18
+Nombre(s) identidad 30
+Primer apellido identidad 30
+Primer apellido identidad 30
+
+Subcausal otro 100
+Motivación de acto jurídico 1000
+
+ANEXOS
+Número de pasaporte cancelado 100
+Número de pasaporte 100
+Especificar 500
