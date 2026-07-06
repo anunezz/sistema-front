@@ -95,43 +95,28 @@
                     <q-card-section>
                         <div class="q-pa-md">
                             <div class="row">
-                                <!-- <div class="col-6 q-pa-md">
-                                    <q-toggle dense :disable="onlyRead || formUser.id != undefined" v-model="formUser.usuario_directorio_activo"
-                                        :false-value="false" :true-value="true" label="Es Cancilleria" left-label v-on:update:model-value="updateUsuarioDirectorioActivo" />
-                                </div> -->
-                                <div class="col-12 q-pa-md"
-                                >
-                                        <q-input :disable="formUser.id != undefined" dense :readonly="onlyRead" outlined v-model="searchLdapUser" label="Buscar"
-                                            counter maxlength="30" v-max="30" :rules="formUser.id !== undefined ? '': searchUserLDAPRules"
-                                            @keyup.enter="searchUserByLdap">
-                                            <template v-slot:append>
-                                                <i class="fa-solid fa-magnifying-glass cursor-pointer"
-                                                    @click="searchUserByLdap" />
-                                            </template>
-                                        </q-input>
-                                </div>
                                 <div class="col-6 q-pa-md">
-                                    <q-input dense :readonly="onlyRead" disable
+                                    <q-input dense :readonly="onlyRead"
                                         outlined v-model="formUser.name" label="Nombre (s) *" counter maxlength="30" v-max="30"
                                         :rules="nombreUsuarioRules" />
                                 </div>
                                 <div class="col-6 q-pa-md">
-                                    <q-input dense :readonly="onlyRead" disable
+                                    <q-input dense :readonly="onlyRead"
                                         outlined v-model="formUser.first_name" label="Apellido paterno *" counter
                                         maxlength="30" v-max="30" :rules="primerApellidoUsuarioRules" />
                                 </div>
                                 <div class="col-6 q-pa-md">
-                                    <q-input dense :readonly="onlyRead" disable
+                                    <q-input dense :readonly="onlyRead"
                                         outlined v-model="formUser.second_name" label="Apellido materno" counter
                                         maxlength="30" v-max="30" :rules="segundoApellidoUsuarioRules" />
                                 </div>
                                 <div class="col-6 q-pa-md">
-                                    <q-input dense :readonly="onlyRead" disable
+                                    <q-input dense :readonly="onlyRead"
                                         outlined v-model="formUser.email" label="Correo Electrónico *" counter
                                         maxlength="70" :rules="correoElectronicoUsuarioRules" />
                                 </div>
                                 <div class="col-6 q-pa-md">
-                                    <q-select dense clearable :readonly="onlyRead" outlined v-model="formUser.id_oficina"
+                                    <q-select dense clearable :readonly="onlyRead" v-model="formUser.id_oficina"
                                         :options="catalogs.cat_oficina" use-input emit-value v-max="70" map-options
                                         label="Oficina *"   @filter="filterOffices" />
                                 </div>
@@ -384,7 +369,7 @@ watch(() => formUser.value.id_perfil, () => {
 }, { immediate: true });
 
 watch(() => formUser.value.permissions, () => {
-  
+
   permissionTree.value = buildTree(permissionOriginal.value);
 }, { immediate: true, deep: true });
 
@@ -400,11 +385,6 @@ watch(() => formUser.value.permissions, () => {
 
 const searchLdapUser = ref('');
 
-const searchUserLDAPRules = [
-    val => !!val || 'El nombre de usuario es requerido.', // Campo requerido
-    val => (val && val.length <= 30) || 'Máximo 30 caracteres.', // Límite de longitud
-    val => !val || /^[a-zA-Z0-9]*$/.test(val) || 'Solo caracteres alfanuméricos (letras y números).'
-];
 
 const nombreUsuarioRules = [
     val => !!val || 'El nombre de usuario es requerido.', // Campo requerido
@@ -431,34 +411,6 @@ const correoElectronicoUsuarioRules = [
 const perfilUsuarioRules = [
     val => (val !== null && val !== undefined && val !== '') || 'La selección de perfil es obligatoria'
 ];
-
-const searchUserByLdap = () => {
-    $q.loading.show();
-    UserServices.search({ 'username': searchLdapUser.value }).then(response => {
-        if (response.data.status == 'found') {
-            formUser.value.name = response.data.user.name;
-            formUser.value.first_name = response.data.user.first_name;
-            formUser.value.second_name = response.data.user.second_name;
-            formUser.value.email = response.data.user.email;
-            showSuccess(
-                'Usuario encontrado',
-                'Usuario encontrado correctamente'
-            )
-        }else if(response.data.status == 'not_found'){
-            showError('Usuario no Encontrado.', `El usuario ${searchLdapUser.value} no existe, verifica e intenta nuevamente`);
-        }
-        else if(response.data.status == 'already_exists'){
-            showError('Error', `El usuario ingresado ya se encuentra registrado`);
-        }
-    }).catch(error => {
-        $q.loading.hide()
-        console.log(error)
-        showError(
-            'Error interno del servidor',
-            'Ocurrió un error inesperado en el servidor, intenta más tarde'
-        )
-    }).finally(()=>$q.loading.hide())
-}
 
 const filterOffices = (val, update) => {
 
@@ -540,7 +492,7 @@ const requestUserStore = () => {
                 'Acceso denegado',
                 error.response.data.message || 'No autorizado'
             );
-        } 
+        }
         else if (error.response && error.response.status === 422) {
         showError(
             'Usuario duplicado',
@@ -584,7 +536,7 @@ const requestUserUpdate = async () => {
                 'Acceso denegado',
                 error.response.data.message || 'No autorizado'
             );
-        } 
+        }
     else if (error.response && error.response.status === 422) {
       showValidationError(error);
     } else {
@@ -676,7 +628,7 @@ const showUser = (id) => {
                 'Acceso denegado',
                 error.response.data.message || 'No autorizado'
             );
-        } 
+        }
     }).finally(()=>$q.loading.hide());
 }
 

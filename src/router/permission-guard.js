@@ -3,7 +3,7 @@ import utils from 'src/utils/utils'
 const { checkIfExistDataUser, checkPermissions } = utils
 
 export const hasPermissionGuard = async (to, from, next) => {
-	if (sessionStorage.getItem('impedimentos_token')) {
+	if (sessionStorage.getItem('sistema_token')) {
 		if ((await checkIfExistDataUser()) === true) {
 			if (
 				to &&

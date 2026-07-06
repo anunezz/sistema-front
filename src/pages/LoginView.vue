@@ -22,7 +22,7 @@
                 >
                   <div class="row" style="width: 100%;">
                 <span style="font-size: calc(12px + 1.5vw);width: 100%;" class="txt3">
-                    SIAJ
+                    SISTEMA
                     <q-badge
                       outline
                       color="primary"
@@ -34,7 +34,7 @@
                   <br/>
                   <div class="row">
                     <p style="font-size: 14px; font-weight: 400;margin-bottom: 20px" class="txt3">
-                      Sistema de Impedimentos Administrativos y Judiciales <br />
+                      Sistema de DEMO <br />
                     </p>
                   </div>
                   <div class="row q-col-gutter-md q-mb-md" style="margin-top: 15px">
@@ -78,17 +78,25 @@
 
 
                 <br />
-                <br />
-                <q-btn
-                  label="ACCEDER"
-                  type="submit"
-                  style="background: #039B77; color: white"
-                  class="full-width"
-                />
-               <!-- <div class="row justify-center" style="margin-top: 15px;">
-                 <p style="margin-right: 5px;">¿Olvidaste tu contraseña? </p>
-                 <span style="color: #C10015; cursor: pointer;"  @click="$router.push({name:'ForgotPassword'})">RECUPERAR</span>
-               </div> -->
+
+				<div class="row justify-center q-gutter-xs">
+					<div class="col-12">
+						<q-btn
+							label="Iniciar sesión"
+							icon="fa-duotone fa-regular fa-user"
+							type="submit"
+							style="background: #039B77; color: white"
+							class="full-width q-mt-md"
+							unelevated
+							no-caps
+							/>
+					</div>
+					<div class="col-12">
+						<p style="margin-right: 5px;">¿Olvidaste tu contraseña? </p>
+						<span style="color: #C10015; cursor: pointer;"  @click="$router.push({name:'ForgotPassword'})">Recuperar</span>
+					</div>
+				</div>
+
               </div>
               <div
                 style="
@@ -103,7 +111,7 @@
             <div style="text-align: center; max-width: 400px">
               <br /><br />
               <span style="font-size: 16px; font-weight: bold; color: white">
-                © {{ currentYear }} - Secretaría de Relaciones Exteriores
+                © {{ currentYear }} - Sistema DEMO
               </span>
               <br /><br />
               <!--          <q-img-->

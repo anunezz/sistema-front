@@ -11,15 +11,6 @@
 			</div>
 			<br />
 
-			<!--<div class="row q-gutter-xs">
-				<div class="row q-gutter-xs">
-					<q-btn outline icon="fas fa-angle-left" class="custom-back-btn" style="background-color: #00b388"
-						@click="$router.push({ name: 'AdministrationMenu' })">
-						Regresar
-					</q-btn>
-				</div>
-			</div>-->
-
 			<br />
 			<CatCausalImpedimento v-if="selectedCat === 1" />
 			<!-- <CatEntidadFederativa v-if="selectedCat === 2" />
@@ -27,8 +18,8 @@
 			<!-- <CatGeneralGenero v-if="selectedCat === 4" /> -->
 			<!-- <CatMunicipio v-if="selectedCat === 5" /> -->
 			<CatOficinas v-if="selectedCat === 6" />
-			<!-- <CatPais v-if="selectedCat === 7" /> -->
-			<!-- <CatPerfil v-if="selectedCat === 8" /> -->
+			<CatCategorias v-if="selectedCat === 8" />
+			<CatServicios v-if="selectedCat === 9" />
 
 		</div>
 	</template>
@@ -41,23 +32,27 @@
 	// import CatGeneralGenero from './CatGeneralGenero.vue'
 	// import CatMunicipio from './CatMunicipio.vue'
 	import CatOficinas from './CatOficinas.vue'
-	// import CatPais from './CatPais.vue'
-	// import CatPerfil from './CatPerfil.vue'
+	import CatCategorias from './CatCategorias.vue'
+	import CatServicios from './CatServicios.vue'
 	import { BinnacleTransaction } from "src/utils/binnacle"
+	import { useCatalogosStore } from 'src/stores/catalogo'
+	import { storeToRefs } from 'pinia'
 
 	import imageRoute from 'src/assets/icons/Home/admin_catalogos.png';
+
+	const catalogosStore = useCatalogosStore()
+	const { selectedCat } = storeToRefs(catalogosStore)
 	const iconModule = ref(imageRoute);
 
-	const selectedCat = ref(null)
 	const options = ref([
 		{ id: 1, name: 'Causales' },
-		// { id: 2, name: 'Entidad' },
+		{ id: 8, name: 'Categorías' },
+		{ id: 9, name: 'Servicios' },
 		// { id: 3, name: 'Estatus' },
 		// { id: 4, name: 'General' },
 		// { id: 5, name: 'Municipio' },
 		{ id: 6, name: 'Oficinas' },
 		// { id: 7, name: 'Pais' },
-		// { id: 8, name: 'Perfil' },
 	])
 
 	watch(selectedCat, (newValue) => {
@@ -69,7 +64,6 @@
 
 
 	onMounted(() => {
-		//Transicion bitacora (moduleId, typeTransactionId, 'action')
 		BinnacleTransaction(10, 1, 'Ingreso al modulo de Administración de Catálogos')
 	})
 	</script>

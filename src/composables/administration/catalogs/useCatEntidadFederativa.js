@@ -3,13 +3,13 @@ import { debounce } from 'lodash'
 import { useQuasar } from "quasar";
 import useNotify from "src/composables/useNotify";
 import CatEntidadFederativaServices from "src/services/administration/catalogs/CatEntidadFederativaServices";
-import CatPaisServices from "src/services/administration/catalogs/CatPaisServices";
+import CatPaisServices from "src/services/administration/catalogs/CatCategoriasServices";
 import DeleteAlert from 'components/DeleteAlert.vue'
 
 const useCatEntidadFederativa = () => {
     const $q = useQuasar()
     const { showError, showSuccess, showWarning } = useNotify()
-    
+
     const title = ref('')
     const showModal = ref(false)
     const search = ref('')
@@ -26,8 +26,8 @@ const useCatEntidadFederativa = () => {
         rowsPerPage: 10,
         rowsNumber: 0
     })
-    
-    
+
+
     const columns = ref([
         {
             name: 'id_entidad_federativa',
@@ -61,10 +61,10 @@ const useCatEntidadFederativa = () => {
             name: 'actions',
             align: 'center',
             label: 'Acciones',
-            
+
         }
     ])
-    
+
     const customDelete = (id) => {
         $q.dialog({
             component: DeleteAlert,
@@ -75,7 +75,7 @@ const useCatEntidadFederativa = () => {
                 question: '¿DESEA ELIMINAR EL REGISTRO DE FORMA PERMANENTE?',
                 button: 'Eliminar'
             }
-            
+
         }).onOk(() => {
             deleteRegister(id);
         }).onCancel(() => {
@@ -85,9 +85,9 @@ const useCatEntidadFederativa = () => {
             });
         })
     }
-    
+
     const deleteRegister = (id) => {
-        
+
         CatEntidadFederativaServices.remove(id).then(response => {
             $q.loading.hide()
             if (response.data.success) {
@@ -106,13 +106,13 @@ const useCatEntidadFederativa = () => {
             )
         })
     }
-    
+
     const getRegisters = (props) => {
-        
+
         if (props !== undefined) {
             pagination.value = props.pagination
         }
-        
+
         const data = {
             params: {
                 page: pagination.value.page,
@@ -120,9 +120,9 @@ const useCatEntidadFederativa = () => {
                 search: search.value
             }
         };
-        
+
         $q.loading.show()
-        
+
         CatEntidadFederativaServices.index(data).then(response => {
             $q.loading.hide()
             if (response.data.success) {
@@ -138,18 +138,18 @@ const useCatEntidadFederativa = () => {
             showError('Error', 'No se puede completar la acción')
         })
     }
-    
+
     const onSubmit = () => {
         $q.loading.show()
         CatEntidadFederativaServices.store(catForm.value).then(response => {
-            
+
             $q.loading.hide()
             if (response.data.success) {
                 showModal.value = false
                 showSuccess('', 'El registro se guardó correctamente.');
                 getRegisters()
             }
-            
+
         }).catch(error => {
             $q.loading.hide()
             if (error.response.status === 422) {
@@ -159,7 +159,7 @@ const useCatEntidadFederativa = () => {
             }
         })
     }
-    
+
     const onUpdate = () => {
         $q.loading.show()
         CatEntidadFederativaServices.update(
@@ -172,7 +172,7 @@ const useCatEntidadFederativa = () => {
                     showSuccess('El registro se actualizó correctamente.')
                     getRegisters()
                 }
-                
+
             }).catch(e => {
                 $q.loading.hide()
                 if (e.response.status === 422) {
@@ -186,7 +186,7 @@ const useCatEntidadFederativa = () => {
                         'No se puede completar la acción'
                     )
                 }
-                
+
             })
     }
 

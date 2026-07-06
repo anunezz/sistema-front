@@ -56,13 +56,13 @@ const removeSession = () =>{
 
 
 watch(idle, (idleValue) => {
-  if (idleValue && window.sessionStorage.getItem("impedimentos_token")) {
+  if (idleValue && window.sessionStorage.getItem("sistema_token")) {
     removeSession()
   }
 })
 
 onMounted(async () => {
-  if ( window.sessionStorage.getItem("impedimentos_token")) {
+  if ( window.sessionStorage.getItem("sistema_token")) {
     await store.sessionInfo()
   }
 })

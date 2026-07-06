@@ -4,9 +4,6 @@ export default {
   index (data) {
     return axiosInstance.get('/administration/users', data);
   },
-  search(data){
-    return axiosInstance.post('/administration/users/search',data);
-  },
   create () {
     return axiosInstance.get('/administration/users/create');
   },

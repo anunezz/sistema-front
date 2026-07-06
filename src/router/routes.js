@@ -1,4 +1,4 @@
-//import forgotPasswordRoute from './public/ForgotPassword.js'
+import forgotPasswordRoute from './public/ForgotPassword.js'
 import resetPasswordRoute from './public/ResetPassword.js'
 import Discharge_of_impediments from "src/router/discharge_of_impediments";
 
@@ -12,14 +12,26 @@ import reportStatistics from 'src/router/administration/ReportStatistics'
 import { isAuthenticatedGuard } from 'src/router/auth-guard'
 
 const routes = [
-	//{ ...forgotPasswordRoute },
+	{ ...forgotPasswordRoute },
 	{ ...resetPasswordRoute },
+	{
+		path: '/the_planet',
+		name: 'the_planet_init',
+		component: () => import('pages/index_page_the_planet.vue'),
+		beforeEnter: (to, from, next) => {
+			if (sessionStorage.getItem('sistema_token')) {
+				next({ name: 'AdministrationMenu' })
+			} else {
+				next()
+			}
+		},
+	},
 	{
 		path: '/ingresar',
 		name: 'login',
 		component: () => import('pages/LoginView.vue'),
 		beforeEnter: (to, from, next) => {
-			if (sessionStorage.getItem('impedimentos_token')) {
+			if (sessionStorage.getItem('sistema_token')) {
 				next({ name: 'AdministrationMenu' })
 			} else {
 				next()
@@ -60,9 +72,6 @@ const routes = [
 		path: '/',
 		redirect:{name:'AdministrationMenu'}
 	},
-
-	// Always leave this as last one,
-	// but you can also remove it
 	{
 		path: '/:catchAll(.*)*',
 		component: () => import('pages/ErrorNotFound.vue'),

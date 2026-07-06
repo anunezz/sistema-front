@@ -2,7 +2,7 @@ import { boot } from "quasar/wrappers";
 import { useAuthUserStore } from "src/stores/AuthUser";
 
 export default boot(async({router,store})=>{
-	const token = sessionStorage.getItem('impedimentos_token');
+	const token = sessionStorage.getItem('sistema_token');
 
 	const authUserStore = useAuthUserStore(store);
 

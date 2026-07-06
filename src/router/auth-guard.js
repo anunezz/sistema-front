@@ -1,6 +1,6 @@
 export const isAuthenticatedGuard = async( to, from, next ) => {
 
-    if (sessionStorage.getItem('impedimentos_token')) {
+    if (sessionStorage.getItem('sistema_token')) {
         next()
     } else {
         next('/ingresar')

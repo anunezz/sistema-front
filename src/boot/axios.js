@@ -25,7 +25,7 @@ console.log('newHash', newHash)  //poner el nuevo hash en el backend
 
 axiosInstance.interceptors.request.use(function(config) {
 
-  let token = sessionStorage.getItem('impedimentos_token')
+  let token = sessionStorage.getItem('sistema_token')
   //se pone esta opción para permitir la descarga de pdfs o excel, hay que poner la cabecera responseType: 'blob'  en los Service
   ENCRYPT_CHANNEL = (process.env.ENCRYPT_CHANNEL == 'false' || ( config.headers['Accept-C'] != undefined && config.headers['Accept-C'] == 'false' )) ? false : true
 
@@ -54,7 +54,7 @@ axiosInstance.interceptors.request.use(function(config) {
     config.headers.Authorization = `Bearer ${token}`
   } else {
     config.headers.Authorization = ''
-    window.sessionStorage.removeItem('impedimentos_token')
+    window.sessionStorage.removeItem('sistema_token')
   }
   return config
 }, function(error) {
@@ -78,7 +78,7 @@ axiosInstance.interceptors.response.use(function(response) {
   if (error.response && error.response.status === 401) {
 
 
-    sessionStorage.removeItem('impedimentos_token')
+    sessionStorage.removeItem('sistema_token')
 
     delete axiosInstance.defaults.headers.common.Authorization
 

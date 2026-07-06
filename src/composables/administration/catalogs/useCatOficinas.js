@@ -3,7 +3,7 @@ import { debounce } from 'lodash'
 import { useQuasar } from "quasar";
 import useNotify from "src/composables/useNotify";
 import CatOficinasServices from "src/services/administration/catalogs/CatOficinasServices";
-import CatPaisServices from "src/services/administration/catalogs/CatPaisServices";
+import CatPaisServices from "src/services/administration/catalogs/CatCategoriasServices";
 import DeleteAlert from 'components/DeleteAlert.vue'
 import { BinnacleTransaction } from "src/utils/binnacle"
 

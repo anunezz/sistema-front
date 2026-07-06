@@ -1,6 +1,6 @@
 // src/router/public/ResetPassword.js
 export default {
-  path: '/reset-password',
+  path: '/actualizar_credenciales/:hash?',
   component: () => import('layouts/PublicLayout.vue'),
   children: [
     {

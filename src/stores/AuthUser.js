@@ -35,20 +35,20 @@ export const useAuthUserStore = defineStore('auth', {
     },
 
     setSession(session) {
-      sessionStorage.setItem('impedimentos_token', session.impedimentos_token);
-      sessionStorage.setItem('impedimentos_token_expiration', session.impedimentos_token_expiration);
+      sessionStorage.setItem('sistema_token', session.sistema_token);
+      sessionStorage.setItem('sistema_token_expiration', session.sistema_token_expiration);
       sessionStorage.setItem('impedimentos_hash', session.impedimentos_hash);
 
       axiosInstance.defaults.headers.common = {
         Accept: 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        Authorization: 'Bearer ' + sessionStorage.getItem('impedimentos_token')
+        Authorization: 'Bearer ' + sessionStorage.getItem('sistema_token')
       };
     },
 
     async logout () {
       // await this.deleteUser()
-      if ( window.sessionStorage.getItem('impedimentos_token') ) {
+      if ( window.sessionStorage.getItem('sistema_token') ) {
         setTimeout(function(){
           Notify.create({
             type: 'positive',
@@ -58,8 +58,8 @@ export const useAuthUserStore = defineStore('auth', {
           })
         }, 200);
       }
-      sessionStorage.removeItem('impedimentos_token');
-      sessionStorage.removeItem('impedimentos_token_expiration');
+      sessionStorage.removeItem('sistema_token');
+      sessionStorage.removeItem('sistema_token_expiration');
       sessionStorage.removeItem('impedimentos_hash');
 
       axiosInstance.defaults.headers.common = {

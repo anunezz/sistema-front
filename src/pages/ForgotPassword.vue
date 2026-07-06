@@ -2,7 +2,7 @@
   <q-header elevated style="background: #691C32;height: 47px">
       <q-toolbar>
         <q-toolbar-title>
-          <q-img class="avatar" src="~assets/img/login/logoSRE.png" style="width: 300px;"/>
+          <!-- <q-img class="avatar" src="~assets/img/login/logoSRE.png" style="width: 300px;"/> -->
         </q-toolbar-title>
 
       </q-toolbar>
@@ -13,9 +13,9 @@
       <div class="row q-pa-xl">
 		  <q-img src="~assets/img/login/logo_reset_password.png" style="width: 150px;"/>
         <div class="column items-center justify-center q-pl-xl">
-          <h3 class="text-weight-bold" style="margin-bottom: 30px; margin: 0; font-size: 25px;">SIAJ</h3>
+          <h3 class="text-weight-bold" style="margin-bottom: 30px; margin: 0; font-size: 25px;">SISTEMA</h3>
           <h4 style="max-width: 210px; margin: 0; padding:0; font-size: 15px;">
-            Sistema de Impedimentos Administrativos y Judiciales
+            Sistema DEMO
           </h4>
         </div>
       </div>
@@ -32,10 +32,10 @@
           <q-btn style="background-color:#c39326; color:white;" class="q-px-xl q-py-sm" label="RECUPERAR CONTRASEÑA" icon="lock" stack type="submit" />
       </div>
       <div class="flex items-center justify-center q-mt-xl text-primary">
-        <p  @click="$router.push({ path: '/ingresar' })" class="cursor-pointer">INICIAR SESIÓN</p>
+        <p  @click="$router.push({ path: '/ingresar' })" class="cursor-pointer">Iniciar sesión</p>
       </div>
       <div class="flex items-center justify-center q-mt-xl text-dark">
-        <p>©2025 - Secretaría de Relaciones Exteriores.</p>
+        <p>©2025 - SISTEMA.</p>
       </div>
       </q-form>
 
@@ -53,8 +53,13 @@ const message = ref('')
 const error = ref('')
 const submit = async () => {
   try {
-    const res = await axiosInstance.post('/forgot-password', { email: email.value })
-    message.value = res.data.message
+    const res = await axiosInstance.post('/forgot_password', { email: email.value })
+
+	if( res.data.success ){
+		message.value = res.data.aux ? 'Se envio un correo electronico para restablecer las credenciales.' : 'Error el correo electronico no existe.'
+	}
+
+	//message.value = res.data.message
   } catch (err) {
     message.value = 'Ocurrió un error.'
     error.value = err

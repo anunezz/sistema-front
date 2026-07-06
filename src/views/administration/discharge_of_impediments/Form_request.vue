@@ -775,27 +775,40 @@
   </div>
 
 </template>
+
 <script setup>
-import HeaderSection from 'components/HeaderSection.vue';
-import UploadFileChuncks from 'src/components/UploadFileChuncks.vue';
-import {ref,onMounted,computed} from "vue";
-import DischargeImpedimentsServices from 'src/services/discharge_of_impediments';
-import {useQuasar} from "quasar";
-import {useRouter} from 'vue-router';
-import {useAuthUserStore} from "stores/AuthUser";
+import HeaderSection from 'components/HeaderSection.vue'
+import UploadFileChuncks from 'src/components/UploadFileChuncks.vue'
+
+import { ref, onMounted, computed } from "vue"
+import { useQuasar } from "quasar"
+import { useRouter } from 'vue-router'
+
+import DischargeImpedimentsServices from 'src/services/discharge_of_impediments'
+import { useAuthUserStore } from "stores/AuthUser"
 import useImpedimentForm from 'src/composables/useImpedimentForm'
 
-import imageRoute from 'src/assets/icons/Home/bandeja_solicitudes.png';
-const iconModule = ref(imageRoute);
+// 🔥 Pinia (ÚNICA fuente del form)
+import { useEjemploStore } from 'src/stores/ejemplo'
+import { storeToRefs } from 'pinia'
 
-const router = useRouter();
-const $q = useQuasar();
+// imagen
+import imageRoute from 'src/assets/icons/Home/bandeja_solicitudes.png'
+const iconModule = ref(imageRoute)
+
+// ===== PINIA =====
+const ejemploStore = useEjemploStore()
+const { form } = storeToRefs(ejemploStore)
+
+// ===== CORE =====
+const router = useRouter()
+const $q = useQuasar()
 const store = useAuthUserStore()
 
+// ===== COMPOSABLE (SIN form) =====
 const {
   state_date,
   state_fecha_nacimiento,
-  form,
   options,
   myLocale,
   id_estatus_solicitud,
@@ -817,136 +830,197 @@ const {
   getImpediment
 } = useImpedimentForm()
 
+// ===== ACTION =====
 const action = computed(() => {
-  return ( router.currentRoute.value.params.hash_id == undefined ? "Nuevo" : "Editar" );
-});
-
-const title = ref(null);
-const message = ref(null);
-const dialog = ref(false);
-const label_btn = ref(false);
-const action_save_form = ref(null);
-
-const actionForm = () => {
-    let select_funtion = null;
-    switch (action_save_form.value) {
-      case 1:
-        select_funtion = onSubmit();
-      break;
-      case 2:
-        select_funtion = onUpdate();
-      break;
-      case 3:
-        select_funtion = onChangeStatus();
-      break;
-    }
-
-    return select_funtion;
-};
-
-
-const onSubmit = async () => {
-  $q.loading.show();
-  await DischargeImpedimentsServices.save({ ...form.value, moduleId: 2,}).then(response => {
-    $q.loading.hide();
-    if (response.data.success) {
-      $q.notify({
-        color: 'green-4',
-        textColor: 'white',
-        icon: 'cloud_done',
-        message: 'Éxito, se ha guardado la solicitud correctamente.'
-      });
-      dialog.value = false;
-      router.push({ name: 'InboxRequests' });
-    }
-  }).catch(e => {
-    $q.loading.hide();
-    console.error("error: ", e);
-  });
-};
-
-const onUpdate = async () => {
-  $q.loading.show();
-  await DischargeImpedimentsServices.update({
-    hash_id : router.currentRoute.value.params.hash_id,
-    moduleId: 2,
-    ...form.value
-  }).then(response => {
-    $q.loading.hide();
-    if (response.data.success) {
-      $q.notify({
-        color: 'green-4',
-        textColor: 'white',
-        icon: 'cloud_done',
-        message: 'Éxito, se ha actualizado la solicitud correctamente.'
-      });
-      dialog.value = false;
-	  getImpediment();
-    }
-  }).catch(e => {
-    $q.loading.hide();
-    console.error("error: ",e);
-  })
-}
-
-const onChangeStatus = async () => {
-  $q.loading.show();
-  await DischargeImpedimentsServices.change_status({
-    ...form.value,
-    hash_id : router.currentRoute.value.params.hash_id,
-    moduleId: 2,
-  }).then(response => {
-    $q.loading.hide();
-    if (response.data.success) {
-      $q.notify({
-        color: 'green-4',
-        textColor: 'white',
-        icon: 'cloud_done',
-        message: 'Éxito, se ha actualizado y enviado a revision la solicitud correctamente.'
-      });
-    router.push({name:'InboxRequests'});
-    }
-  }).catch(e => {
-    $q.loading.hide();
-    console.error("error: ",e);
-  })
-}
-
-const validateFields = async () => {
-  await myForm.value.validate().then(success => {
-
-
-    if( validateFiles(success) ){
-      return;
-    }
-
-    dialog.value = true;
-    switch (action_save_form.value) {
-      case 1:
-        title.value = 'Nueva solicitud';
-        message.value = '¿Estás completamente seguro de guardar la solicitud?';
-        label_btn.value = 'Guardar';
-      break;
-      case 2:
-        title.value = 'Actualizar solicitud';
-        message.value = '¿Estás completamente seguro de actualizar la solicitud?';
-        label_btn.value = 'Actualizar';
-      break;
-      case 3:
-        title.value = 'Actualizar y enviar a revisión';
-        message.value = `¿Estás completamente seguro de actualizar y enviar a revisión la solicitud?`;
-        label_btn.value = 'Actualizar y enviar a revisión';
-      break;
-    }
-
-  });
-};
-
-onMounted(() => {
-  title.value = 'Solicitud / '+action.value;
+  return (router.currentRoute.value.params.hash_id == undefined ? "Nuevo" : "Editar")
 })
-</script>
 
+// ===== MODAL =====
+const title = ref(null)
+const message = ref(null)
+const dialog = ref(false)
+const label_btn = ref(false)
+const action_save_form = ref(null)
+
+// ===== 🔥 FORM BASE (TODOS LOS CAMPOS IMPORTANTES) =====
+const defaultForm = {
+  numero_documento: '',
+  id_solicitud: null,
+  id_tipo_solicitud: null,
+  id_oficina: null,
+  id_prioridad: null,
+  urgencia: false,
+  dependencia: false,
+  nombre_dependencia: '',
+  fecha_registro: '',
+  correo_electronico: '',
+  curp: '',
+  nombres: '',
+  primer_apellido: '',
+  segundo_apellido: '',
+  fecha_nacimiento: '',
+  entidad_federativa_nacimiento: '',
+  padre_nombres: '',
+  padre_primer_apellido: '',
+  padre_segundo_apellido: '',
+  madre_nombres: '',
+  madre_primer_apellido: '',
+  madre_segundo_apellido: '',
+  id_causal_impedimento: null,
+  id_subcausal_impedimento: null,
+  causal_otro_descripcion: '',
+  motivacion_acto_juridico: '', // 🔥 IMPORTANTE (QEditor)
+  curp_identidad: '',
+  nombres_identidad: '',
+  primer_apellido_identidad: '',
+  segundo_apellido_identidad: '',
+  selection_anexo: [],
+  numero_pasaporte_cancelado: '',
+  numero_pasaporte: '',
+  otro_documento_soporte: ''
+}
+
+// ===== INIT =====
+onMounted(() => {
+  title.value = 'Solicitud / ' + action.value
+
+  // 🔥 si no hay datos en pinia → inicializa
+  if (!form.value || !Object.keys(form.value).length) {
+    form.value = { ...defaultForm }
+  } else {
+    // 🔥 asegura que TODOS los campos existan
+    form.value = { ...defaultForm, ...form.value }
+  }
+
+  console.log("FORM LISTO:", form.value)
+})
+
+// ===== ACTION HANDLER =====
+const actionForm = () => {
+  switch (action_save_form.value) {
+    case 1: return onSubmit()
+    case 2: return onUpdate()
+    case 3: return onChangeStatus()
+  }
+}
+
+// ===== SAVE =====
+const onSubmit = async () => {
+  $q.loading.show()
+  try {
+    const response = await DischargeImpedimentsServices.save({
+      ...form.value,
+      moduleId: 2
+    })
+
+    if (response.data.success) {
+      $q.notify({
+        color: 'green-4',
+        textColor: 'white',
+        icon: 'cloud_done',
+        message: 'Solicitud guardada correctamente.'
+      })
+
+      ejemploStore.clearForm()
+      dialog.value = false
+      router.push({ name: 'InboxRequests' })
+    }
+
+  } catch (e) {
+    console.error(e)
+  } finally {
+    $q.loading.hide()
+  }
+}
+
+// ===== UPDATE =====
+const onUpdate = async () => {
+  $q.loading.show()
+  try {
+    const response = await DischargeImpedimentsServices.update({
+      hash_id: router.currentRoute.value.params.hash_id,
+      moduleId: 2,
+      ...form.value
+    })
+
+    if (response.data.success) {
+      $q.notify({
+        color: 'green-4',
+        textColor: 'white',
+        icon: 'cloud_done',
+        message: 'Solicitud actualizada.'
+      })
+
+      ejemploStore.clearForm()
+      dialog.value = false
+      getImpediment()
+    }
+
+  } catch (e) {
+    console.error(e)
+  } finally {
+    $q.loading.hide()
+  }
+}
+
+// ===== STATUS =====
+const onChangeStatus = async () => {
+  $q.loading.show()
+  try {
+    const response = await DischargeImpedimentsServices.change_status({
+      ...form.value,
+      hash_id: router.currentRoute.value.params.hash_id,
+      moduleId: 2
+    })
+
+    if (response.data.success) {
+      $q.notify({
+        color: 'green-4',
+        textColor: 'white',
+        icon: 'cloud_done',
+        message: 'Enviado a revisión.'
+      })
+
+      ejemploStore.clearForm()
+      router.push({ name: 'InboxRequests' })
+    }
+
+  } catch (e) {
+    console.error(e)
+  } finally {
+    $q.loading.hide()
+  }
+}
+
+// ===== VALIDACIÓN =====
+const validateFields = async () => {
+  const success = await myForm.value.validate()
+  if (validateFiles(success)) return
+
+  // 🔥 guardar en pinia (persistencia)
+  ejemploStore.setForm(form.value)
+
+  dialog.value = true
+
+  switch (action_save_form.value) {
+    case 1:
+      title.value = 'Nueva solicitud'
+      message.value = '¿Guardar solicitud?'
+      label_btn.value = 'Guardar'
+      break
+    case 2:
+      title.value = 'Actualizar solicitud'
+      message.value = '¿Actualizar solicitud?'
+      label_btn.value = 'Actualizar'
+      break
+    case 3:
+      title.value = 'Enviar a revisión'
+      message.value = '¿Actualizar y enviar a revisión?'
+      label_btn.value = 'Enviar'
+      break
+  }
+}
+</script>
 
 <style scoped>
 
