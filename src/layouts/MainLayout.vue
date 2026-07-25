@@ -15,7 +15,7 @@
           <small style="margin-left: 10%;font-weight: 700">Sistema de Impedimentos Administrativos y Judiciales</small>
         </q-toolbar-title>
         <div class="q-pl-sm q-gutter-sm row items-center no-wrap">
-			<span>{{ store.user.oficina.cad_oficina}}</span>
+			<span>oficina</span>
 			<q-separator dark vertical inset />
           <q-btn dense flat no-wrap>
             <q-icon name="fa-solid fa-house" size="20px" style="margin-right: 15px"/>
@@ -48,7 +48,7 @@
 
 						<div class="text-body2">
 						<q-icon name="business" class="q-mr-sm" />
-						{{ store.user.oficina.cad_oficina }}
+						oficina
 						</div>
 					</div>
                   </q-item-section>

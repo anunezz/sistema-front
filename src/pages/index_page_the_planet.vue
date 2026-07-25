@@ -430,7 +430,8 @@
                 <li>Masajes relajantes</li>
                 <li>Productos Kromasol</li>
                 <li>Escaneos cuánticos</li>
-                <li>Lectura de iris</li>
+                <li>Interpretación de iris</li>
+                <li>Lectura de cartas tarot 🃏🀄🎴</li>
 
               </ul>
 
@@ -465,7 +466,11 @@
       </div>
 
       <div class="text-subtitle1 text-white q-mt-md">
-        Cortes modernos, colorimetría y tratamientos profesionales.
+		<ul>
+			<li>Cortes en tendencia, línea europea.</li>
+			<li>Diseño de color en cabellos</li>
+			<li>Tratamiento capilares: Keratinas, Alaciados Permanentes, Bioplastias, Cinergias.</li>
+		</ul>
       </div>
 
       <q-btn

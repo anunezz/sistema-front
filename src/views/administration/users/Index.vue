@@ -216,7 +216,6 @@ import useNotify from "src/composables/useNotify";
 //import DeleteAlert from "components/DeleteAlert.vue";
 import DisableUserDialog from 'components/DisableUserDialog.vue';
 import UserServices from "src/services/administration/UserServices";
-import {BinnacleTransaction} from "src/utils/binnacle"
 import CatalogServices from 'src/services/administration/CatalogServices';
 
 import imageRoute from 'src/assets/icons/Home/admin_usuarios.png';
@@ -680,7 +679,6 @@ getRegisters()
 
 onMounted(() => {
   //Transicion bitacora (moduleId, typeTransactionId)
-    BinnacleTransaction(12,1,'Ingreso al modulo administracion de usuarios')
 })
 
 </script>
