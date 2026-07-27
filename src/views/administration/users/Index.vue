@@ -613,7 +613,7 @@ const showUser = (id) => {
         const { data } = response.data;
 
         formUser.value = data
-        formUser.value.id_perfil = data.usuario_perfil.id_perfil
+        formUser.value.id_perfil = data?.usuario_perfil?.id_perfil
 
         showDialogToCreateEditUser.value = true;
 
