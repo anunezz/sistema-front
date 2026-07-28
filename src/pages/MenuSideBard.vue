@@ -42,7 +42,6 @@ import { useAuthUserStore } from "src/stores/AuthUser";
 import iconBandejaSolicitudes from 'src/assets/icons/SideBard/bandeja_solicitudes.png';
 import iconAdminCatalogos from 'src/assets/icons/SideBard/admin_catalogos.png';
 import iconAdminUsuarios from 'src/assets/icons/SideBard/admin_usuarios.png';
-import { BinnacleTransaction } from "src/utils/binnacle";
 import { useRouter } from "vue-router";
 
 const authStore = useAuthUserStore();
@@ -59,19 +58,20 @@ const menuList = ref([
   {
     moduleName: '',
     childs:[
-      { id:1, icon: '',iconImage:iconBandejaSolicitudes, moduleId:2 ,moduleName: 'Solicitudes', routeName: 'InboxRequests', color: "#343434",permission:'request_tray'},
-	  { id:2, icon: '', iconImage: iconAdminCatalogos, moduleId: 10,moduleName: 'Administración de Catálogos', routeName: 'CatalogsIndex', color: "#343434",permission:'catalog_management'},
-	  { id:3, icon: '', iconImage: iconAdminUsuarios, moduleId:12 ,moduleName: 'Administración de Usuarios', routeName: 'UsersIndex', color: "#343434",permission:'user_management'},
+      { id:1, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Inicio', routeName: 'InboxRequests', color: "#343434",permission:'inicio'},
+      { id:2, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Servicios', routeName: 'IndexServicios', color: "#343434",permission:'servicios'},
+      { id:3, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Agenda', routeName: 'InboxRequests', color: "#343434",permission:'agenda'},
+      { id:4, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Productos', routeName: 'InboxRequests', color: "#343434",permission:'productos'},
+      { id:5, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Contacto', routeName: 'InboxRequests', color: "#343434",permission:'contacto'},
+	  { id:6, icon: '', iconImage: iconAdminCatalogos,moduleName: 'Administración de Catálogos', routeName: 'CatalogsIndex', color: "#343434",permission:'catalog_management'},
+	  { id:7, icon: '', iconImage: iconAdminUsuarios ,moduleName: 'Administración de Usuarios', routeName: 'UsersIndex', color: "#343434",permission:'user_management'},
     ]
   },
 
 ]);
 
 const handleItem = (menuItem) => {
-
-  BinnacleTransaction(menuItem.moduleId, 1, `Ingreso al módulo de ${menuItem.moduleName}`)
     router.push({ name: menuItem.routeName })
-
 }
 
 const itemStyle = (menuItem) => {

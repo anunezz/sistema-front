@@ -10,9 +10,9 @@
                aria-label="Menu"
                @click="switchMenu = !switchMenu"/>
         <q-toolbar-title>
-          <q-img class="avatar" src="~assets/img/login/logoSRE.png" style="width: 300px;"/>
+          <!-- <q-img class="avatar" src="~assets/img/login/logoSRE.png" style="width: 300px;"/> -->
+          <small style="margin-left: 10%;font-weight: 700">The planet studio</small>
           <small style="font-size: 13px;margin-left: 2px">&nbsp;v{{ $q.config.versionApp }}</small>
-          <small style="margin-left: 10%;font-weight: 700">Sistema de Impedimentos Administrativos y Judiciales</small>
         </q-toolbar-title>
         <div class="q-pl-sm q-gutter-sm row items-center no-wrap">
 			<span>oficina</span>

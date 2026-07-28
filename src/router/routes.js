@@ -2,6 +2,9 @@ import forgotPasswordRoute from './public/ForgotPassword.js'
 import resetPasswordRoute from './public/ResetPassword.js'
 import Discharge_of_impediments from "src/router/discharge_of_impediments";
 
+
+import servicios from 'src/router/administration/Servicios'
+
 import users from 'src/router/administration/Users'
 import binnacle from 'src/router/administration/Binnacle'
 import application_binnacle from 'src/router/administration/ApplicationBinnacle'
@@ -54,6 +57,8 @@ const routes = [
 				name: 'ReloadTemp',
 				component: { template: '<div></div>' },
 			}, */
+
+			{ ...servicios },
 			{ ...users },
 			{ ...catalogs },
 			{ ...reports },

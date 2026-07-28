@@ -53,28 +53,53 @@ const authStore = useAuthUserStore();
 const router = useRouter()
 const modules = ref([
   {
-    name: "Solicitudes",
+    name: "Inicio",
     icon: "",
     iconImage: iconBandejaSolicitudes,
     routeName: "InboxRequests",
-    permission: 'request_tray',
-    module: 2
+    permission: 'inicio'
   },
   {
-    name:'Administración de Catálogos',
+    name:'Servicios',
+    icon:'',
+    iconImage:iconAdminCatalogos,
+    routeName:'IndexServicios',
+    permission:'servicios'
+  },
+  {
+    name:'Agenda',
     icon:'',
     iconImage:iconAdminCatalogos,
     routeName:'CatalogsIndex',
-    permission:'catalog_management',
-    module: 10
+    permission:'agenda'
+  },
+  {
+    name:'Productos',
+    icon:'',
+    iconImage:iconAdminCatalogos,
+    routeName:'CatalogsIndex',
+    permission:'productos'
+  },
+  {
+    name:'Contacto',
+    icon:'',
+    iconImage:iconAdminCatalogos,
+    routeName:'CatalogsIndex',
+    permission:'contacto'
+  },
+  {
+    name:'Administracion de catalogos',
+    icon:'',
+    iconImage:iconAdminCatalogos,
+    routeName:'CatalogsIndex',
+    permission:'catalog_management'
   },
   {
     name: "Administración de Usuarios",
     icon: "",
     iconImage: iconAdminUsuarios,
     routeName: "UsersIndex",
-    permission:'user_management',
-    module: 12
+    permission:'user_management'
   }
 ]);
 

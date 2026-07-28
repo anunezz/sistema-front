@@ -25,7 +25,7 @@ export const useAuthUserStore = defineStore('auth', {
     },
 
     async sessionInfo() {
-      await axiosInstance.get('/user/' + window.sessionStorage.getItem('impedimentos_hash'))
+      await axiosInstance.get('/user/' + window.sessionStorage.getItem('sistema_hash'))
         .then(response => {
           this.setUser(response.data.user);
         }).catch(error => {
@@ -37,7 +37,7 @@ export const useAuthUserStore = defineStore('auth', {
     setSession(session) {
       sessionStorage.setItem('sistema_token', session.sistema_token);
       sessionStorage.setItem('sistema_token_expiration', session.sistema_token_expiration);
-      sessionStorage.setItem('impedimentos_hash', session.impedimentos_hash);
+      sessionStorage.setItem('sistema_hash', session.sistema_hash);
 
       axiosInstance.defaults.headers.common = {
         Accept: 'application/json',
@@ -60,7 +60,7 @@ export const useAuthUserStore = defineStore('auth', {
       }
       sessionStorage.removeItem('sistema_token');
       sessionStorage.removeItem('sistema_token_expiration');
-      sessionStorage.removeItem('impedimentos_hash');
+      sessionStorage.removeItem('sistema_hash');
 
       axiosInstance.defaults.headers.common = {
         Authorization: 'Bearer'

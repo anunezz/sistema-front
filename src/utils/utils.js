@@ -12,7 +12,7 @@ async function checkIfExistDataUser() {
 
 		//return new Promise((resolve, reject) => {
 			axiosInstance
-				.get('/user/' + SessionStorage.getItem('impedimentos_hash'))
+				.get('/user/' + SessionStorage.getItem('sistema_hash'))
 				.then((response) => {
 					store.setUser = response.data.user
 					return true;
