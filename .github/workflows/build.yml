@@ -1,0 +1,39 @@
+name: Build Quasar
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      PUBLIC_PATH: ${{ vars.PUBLIC_PATH }}
+      VUE_ROUTER_MODE: ${{ vars.VUE_ROUTER_MODE }}
+      APP_VERSION: ${{ vars.APP_VERSION }}
+      ENCRYPT_KEY: ${{ secrets.ENCRYPT_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Crear .env
+        run: |
+          echo "PUBLIC_PATH=$PUBLIC_PATH" >> .env
+          echo "VUE_ROUTER_MODE=$VUE_ROUTER_MODE" >> .env
+          echo "APP_VERSION=$APP_VERSION" >> .env
+          echo "ENCRYPT_KEY=$ENCRYPT_KEY" >> .env
+
+      - name: Build
+        run: npm run build
