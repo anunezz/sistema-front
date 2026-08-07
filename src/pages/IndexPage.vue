@@ -1,7 +1,7 @@
 <template>
   <div class="row q-col-gutter-md q-pa-md" style="justify-content: center">
     <div
-      class="col-xs-6 col-md-4"
+      class="col-12 col-sm-6 col-md-4"
       v-for="(section, index) in AccessModulePermission"
       :key="index + 100"
     >

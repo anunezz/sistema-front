@@ -1,21 +1,22 @@
 <template>
-  <div v-for="(link,$index) in menuList" :key="$index">
+  <div v-for="(link,$index) in menuList" :key="$index" class="menu-group">
     <q-item  v-if="link.moduleName !== ''">
       <q-item-section class="text-weight-bold" style="font-size: 12px">
         <strong>{{ link.moduleName }}</strong>
       </q-item-section>
     </q-item>
 
-    <q-list>
+    <q-list class="menu-list">
       <template  v-for="(menuItem, index) in link.childs" :key="index">
         <q-item
           v-if="authStore.hasPermission(menuItem.permission)"
           clickable
           v-ripple
           tag="router-link"
+          class="menu-item"
           @click="handleItem(menuItem)"
           :style="itemStyle(menuItem)"
-          active-class="bg-grey-4 text-primary"
+          active-class="menu-item--active bg-grey-4 text-primary"
           exact
         >
           <q-item-section avatar>
@@ -25,7 +26,7 @@
             />
           </q-item-section>
 
-          <q-item-section :style="menuItem.color ? { color: menuItem.color } : null">
+          <q-item-section v-if="!mini" :style="menuItem.color ? { color: menuItem.color } : null">
             {{ menuItem.moduleName }}
           </q-item-section>
         </q-item>
@@ -46,6 +47,13 @@ import { useRouter } from "vue-router";
 
 const authStore = useAuthUserStore();
 const router = useRouter();
+const emit = defineEmits(['item-click']);
+defineProps({
+  mini: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const menuList = ref([
   {
@@ -72,6 +80,7 @@ const menuList = ref([
 
 const handleItem = (menuItem) => {
     router.push({ name: menuItem.routeName })
+    emit('item-click', menuItem)
 }
 
 const itemStyle = (menuItem) => {
@@ -99,4 +108,38 @@ const itemStyle = (menuItem) => {
 
 }
 
+.menu-group {
+  margin-bottom: 4px;
+}
+
+.menu-list {
+  padding: 2px 8px;
+}
+
+.menu-item {
+  border-radius: 8px;
+  margin-bottom: 3px;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.menu-item:hover {
+  background: rgba(105, 28, 50, 0.08);
+  transform: translateX(2px);
+}
+
+.menu-item--active {
+  position: relative;
+  font-weight: 600;
+}
+
+.menu-item--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: #691C32;
+}
 </style>
