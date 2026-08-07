@@ -22,6 +22,7 @@ jobs:
       PUBLIC_PATH: ${{ vars.PUBLIC_PATH }}
       VUE_ROUTER_MODE: ${{ vars.VUE_ROUTER_MODE }}
       APP_VERSION: ${{ vars.APP_VERSION }}
+      API_URL: ${{ vars.API_URL }}
       ENCRYPT_KEY: ${{ secrets.ENCRYPT_KEY }}
 
     steps:
@@ -39,6 +40,7 @@ jobs:
           echo "PUBLIC_PATH=$PUBLIC_PATH" > .env
           echo "VUE_ROUTER_MODE=$VUE_ROUTER_MODE" >> .env
           echo "APP_VERSION=$APP_VERSION" >> .env
+          echo "API_URL=$API_URL" >> .env
           echo "ENCRYPT_KEY=$ENCRYPT_KEY" >> .env
 
       - name: Build
