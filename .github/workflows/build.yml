@@ -43,6 +43,14 @@ jobs:
           echo "API_URL=$API_URL" >> .env
           echo "ENCRYPT_KEY=$ENCRYPT_KEY" >> .env
 
+      - name: Mostrar .env generado
+        run: |
+          echo "======================"
+          echo "CONTENIDO DEL .ENV"
+          echo "======================"
+          cat .env
+          echo "======================"
+
       - name: Build
         run: npm run build
 
@@ -53,7 +61,6 @@ jobs:
 
   deploy:
     needs: build
-
     runs-on: ubuntu-latest
 
     environment:
@@ -61,5 +68,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - id: deployment
+      - name: Deploy
+        id: deployment
         uses: actions/deploy-pages@v4
