@@ -54,6 +54,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Crear 404 para SPA
+        run: cp dist/spa/index.html dist/spa/404.html
+
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
