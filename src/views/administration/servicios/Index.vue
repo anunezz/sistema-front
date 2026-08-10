@@ -1,102 +1,104 @@
 <template>
   <header-section title="Servicios" :icon-image="iconModule"></header-section>
 
-  <Modal v-model="dialog" @keyup.enter="store.search()" title="Filtros Avanzados">
-    <div class="q-pa-md">
-      <div class="row q-col-gutter-xs">
-        <div class="col-md-12 q-pa-md">
-          <q-input
-            outlined
-            clearable
-            style="width: 100%"
-            dense
-            placeholder="Título"
-            v-model="store.filters.title"
-            v-max="100"
-          />
-        </div>
+  <q-dialog v-model="dialog" transition-show="scale" :maximized="$q.screen.xs">
+    <q-card class="servicio-modal-card responsive-modal-card">
+      <q-card-section class="servicio-modal-header text-white row items-center justify-between">
+        <div class="text-h6">Filtros Avanzados</div>
+        <q-btn flat round dense icon="close" text-color="white" v-close-popup />
+      </q-card-section>
 
-        <div class="col-md-12 q-pa-md">
-          <q-input
-            outlined
-            clearable
-            style="width: 100%"
-            dense
-            placeholder="ID de Módulo"
-            type="number"
-            v-model.number="store.filters.module_id"
-          />
-        </div>
+      <q-form class="responsive-modal-form" @submit.prevent="attemptSearch">
+        <q-card-section class="q-pa-lg responsive-modal-body">
+          <div class="row q-col-gutter-md">
+            <div class="col-12 col-sm-6">
+              <q-input
+                outlined
+                clearable
+                style="width: 100%"
+                dense
+                label="Título"
+                placeholder="Título"
+                v-model="store.filters.title"
+                v-max="100"
+              />
+            </div>
 
-        <div class="col-md-12 q-pa-md">
-          <q-select
-            dense
-            outlined
-            emit-value
-            map-options
-            v-model="store.filters.active"
-            :options="statusFilterOptions"
-            option-value="value"
-            option-label="label"
-            label="Estado"
-            clearable
-          />
-        </div>
-      </div>
-      <br />
-      <div class="row justify-center q-gutter-xs">
-        <q-btn
-          outline
-          size="12px"
-          color="white"
-          text-color="black"
-          icon="fas fa-eraser"
-          label="Limpiar"
-          @click="store.clearFilters()"
-        />
-        <q-btn
-          outline
-          size="12px"
-          icon="fas fa-filter"
-          color="primary"
-          @click="store.search()"
-          label="Buscar"
-        />
-      </div>
-    </div>
-  </Modal>
+            <div class="col-12 col-sm-6">
+              <q-input
+                outlined
+                clearable
+                style="width: 100%"
+                dense
+                label="ID de Módulo"
+                placeholder="ID de Módulo"
+                type="number"
+                v-model.number="store.filters.module_id"
+              />
+            </div>
+
+            <div class="col-12">
+              <q-select
+                dense
+                outlined
+                emit-value
+                map-options
+                v-model="store.filters.active"
+                :options="statusFilterOptions"
+                option-value="value"
+                option-label="label"
+                label="Estado"
+                clearable
+              />
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions class="responsive-modal-actions">
+          <q-btn-group spread class="full-width">
+            <q-btn
+              outline
+              color="grey-8"
+              icon="fas fa-eraser"
+              label="Limpiar"
+              @click="store.clearFilters()"
+            />
+            <q-btn type="submit" outline icon="fas fa-filter" color="primary" label="Buscar" />
+          </q-btn-group>
+        </q-card-actions>
+      </q-form>
+    </q-card>
+  </q-dialog>
 
   <div class="q-pa-md">
-    <div class="row justify-end">
-      <div class="col-12 col-md-12 col-sm-12 col-xs-12">
-        <div class="row justify-end q-gutter-xs">
-          <q-btn-group>
-            <q-btn
-              outline
-              size="12px"
-              color="primary"
-              label="Nuevo servicio"
-              icon="fa-solid fa-plus"
-              @click="openNewRegister()"
-              :style="'width:' + ($q.screen.width <= 468 ? '100%' : '')"
-            />
-            <q-btn
-              outline
-              size="12px"
-              color="withe"
-              icon="fa-solid fa-magnifying-glass"
-              label="Filtros avanzados"
-              @click="dialog = true"
-            />
-          </q-btn-group>
-        </div>
-      </div>
+    <div class="servicios-toolbar">
+      <q-btn
+        outline
+        size="12px"
+        color="primary"
+        label="Nuevo servicio"
+        icon="fa-solid fa-plus"
+        class="servicios-toolbar-btn"
+        @click="openNewRegister()"
+      />
+      <q-btn
+        outline
+        size="12px"
+        color="primary"
+        icon="fa-solid fa-magnifying-glass"
+        label="Filtros avanzados"
+        class="servicios-toolbar-btn"
+        @click="dialog = true"
+      />
     </div>
   </div>
 
   <q-table
     :rows="store.registers"
     :columns="columns"
+    :class="{ 'compact-table': isCompact }"
     separator="cell"
     no-data-label="No hay datos"
     dense
@@ -126,7 +128,7 @@
           <q-icon :name="props.row.icon" size="24px" />
         </q-td>
         <q-td>{{ props.row.title }}</q-td>
-        <q-td>{{ props.row.subtitle }}</q-td>
+        <q-td v-if="!isCompact">{{ props.row.subtitle }}</q-td>
         <q-td>{{ props.row.sort_order }}</q-td>
         <q-td>
           <q-chip
@@ -138,11 +140,14 @@
             {{ props.row.active ? 'Activo' : 'Inactivo' }}
           </q-chip>
         </q-td>
-        <q-td>{{ date.formatDate(props.row.created_at, 'DD-MM-YYYY HH:mm:ss') }}</q-td>
-        <q-td>{{ date.formatDate(props.row.updated_at, 'DD-MM-YYYY HH:mm:ss') }}</q-td>
+        <q-td v-if="!isCompact">{{ date.formatDate(props.row.created_at, 'DD-MM-YYYY HH:mm:ss') }}</q-td>
+        <q-td v-if="!isCompact">{{ date.formatDate(props.row.updated_at, 'DD-MM-YYYY HH:mm:ss') }}</q-td>
         <q-td>
+          <!-- Desktop/tablet grande: mismos botones de siempre.
+               Mobile/tablet chico: mismas acciones, agrupadas en un menú
+               "⋮" para que ninguna quede oculta ni fuerce overflow. -->
           <div class="flex justify-center">
-            <q-btn-group>
+            <q-btn-group v-if="!isCompact">
               <q-btn color="positive" size="sm" @click="openEditRegister(props.row)" icon="edit">
                 <q-tooltip anchor="top middle" self="center middle">Editar</q-tooltip>
               </q-btn>
@@ -163,21 +168,57 @@
                 <q-tooltip anchor="top middle" self="center middle">Administrar contenido</q-tooltip>
               </q-btn>
             </q-btn-group>
+
+            <q-btn v-else round flat color="grey-8" icon="more_vert" size="md" class="actions-menu-btn">
+              <q-menu anchor="bottom right" self="top right">
+                <q-list style="min-width: 200px">
+                  <q-item clickable v-close-popup @click="openEditRegister(props.row)">
+                    <q-item-section avatar><q-icon color="positive" name="edit" /></q-item-section>
+                    <q-item-section>Editar</q-item-section>
+                  </q-item>
+                  <q-item clickable v-close-popup @click="store.confirmStatusChange(props.row)">
+                    <q-item-section avatar>
+                      <q-icon
+                        :color="props.row.active ? 'warning' : 'primary'"
+                        :name="props.row.active ? 'block' : 'check_circle'"
+                      />
+                    </q-item-section>
+                    <q-item-section>{{ props.row.active ? 'Desactivar' : 'Activar' }}</q-item-section>
+                  </q-item>
+                  <q-item clickable v-close-popup @click="store.confirmRemove(props.row)">
+                    <q-item-section avatar><q-icon color="negative" name="delete" /></q-item-section>
+                    <q-item-section>Eliminar</q-item-section>
+                  </q-item>
+                  <q-item clickable v-close-popup @click="openContentManager(props.row)">
+                    <q-item-section avatar><q-icon color="info" name="article" /></q-item-section>
+                    <q-item-section>Administrar contenido</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
           </div>
         </q-td>
       </q-tr>
     </template>
   </q-table>
 
-  <q-dialog v-model="store.showModal" persistent transition-show="scale">
-    <q-card class="servicio-modal-card" style="width: 700px; max-width: 90vw">
-      <q-card-section class="servicio-modal-header text-white">
-        <q-icon name="miscellaneous_services" size="28px" class="q-mr-sm" />
-        <div class="text-h6">{{ store.title }}</div>
+  <q-dialog
+    v-model="store.showModal"
+    persistent
+    transition-show="scale"
+    :maximized="$q.screen.xs"
+  >
+    <q-card class="servicio-modal-card responsive-modal-card">
+      <q-card-section class="servicio-modal-header text-white row items-center justify-between">
+        <div class="row items-center">
+          <q-icon name="miscellaneous_services" size="28px" class="q-mr-sm" />
+          <div class="text-h6">{{ store.title }}</div>
+        </div>
+        <q-btn flat round dense icon="close" text-color="white" @click="store.showModal = false" />
       </q-card-section>
 
-      <q-card-section class="q-pa-lg">
-        <q-form class="validate-form" @submit="confirmSubmit()">
+      <q-form class="responsive-modal-form" @submit="confirmSubmit()">
+        <q-card-section class="q-pa-lg responsive-modal-body">
           <div class="row q-col-gutter-lg">
             <div class="col-12 col-md-6">
               <q-field
@@ -243,43 +284,48 @@
               />
             </div>
           </div>
+        </q-card-section>
 
-          <q-separator class="q-my-lg" />
+        <q-separator />
 
-          <div>
-            <q-btn-group spread>
-              <q-btn
-                icon="close"
-                @click="store.showModal = false"
-                text-color="white"
-                style="background-color: #9f2241"
-                label="Cancelar"
-              />
-              <q-btn
-                v-if="store.form.action === 1"
-                type="submit"
-                icon="save"
-                text-color="white"
-                style="background-color: #00a982"
-                label="Guardar"
-              />
-              <q-btn
-                v-else
-                type="submit"
-                icon="edit"
-                label="Actualizar"
-                text-color="white"
-                style="background-color: #00a982"
-              />
-            </q-btn-group>
-          </div>
-        </q-form>
-      </q-card-section>
+        <q-card-actions class="responsive-modal-actions">
+          <q-btn-group spread class="full-width">
+            <q-btn
+              icon="close"
+              @click="store.showModal = false"
+              text-color="white"
+              style="background-color: #9f2241"
+              label="Cancelar"
+            />
+            <q-btn
+              v-if="store.form.action === 1"
+              type="submit"
+              icon="save"
+              text-color="white"
+              style="background-color: #00a982"
+              label="Guardar"
+            />
+            <q-btn
+              v-else
+              type="submit"
+              icon="edit"
+              label="Actualizar"
+              text-color="white"
+              style="background-color: #00a982"
+            />
+          </q-btn-group>
+        </q-card-actions>
+      </q-form>
     </q-card>
   </q-dialog>
 
-  <q-dialog v-model="iconPickerOpen" transition-show="scale" transition-hide="scale">
-    <q-card class="servicio-modal-card icon-picker-card">
+  <q-dialog
+    v-model="iconPickerOpen"
+    transition-show="scale"
+    transition-hide="scale"
+    :maximized="$q.screen.xs"
+  >
+    <q-card class="servicio-modal-card icon-picker-card responsive-modal-card">
       <q-card-section class="servicio-modal-header text-white">
         <q-icon name="apps" size="28px" class="q-mr-sm" />
         <div class="text-h6">Seleccionar icono</div>
@@ -367,7 +413,6 @@ import { date, useQuasar } from 'quasar'
 import type { QTableColumn } from 'quasar'
 import { useRouter } from 'vue-router'
 import HeaderSection from 'components/HeaderSection.vue'
-import Modal from 'src/components/Modal.vue'
 import DeleteAlert from 'components/DeleteAlert.vue'
 import { useCatServiciosStore } from 'src/stores/CatServicios'
 import imageRoute from 'src/assets/icons/Home/bandeja_solicitudes.png'
@@ -387,16 +432,76 @@ const statusFilterOptions = [
   { label: 'Inactivo', value: false },
 ]
 
-const columns = ref<QTableColumn<ServiceCategoryRecord>[]>([
-  { name: 'icon', align: 'center', label: 'Icono', field: (row) => row.icon, headerStyle: 'width: 70px' },
-  { name: 'title', align: 'left', label: 'Título', field: (row) => row.title, headerStyle: 'width: 150px' },
-  { name: 'subtitle', align: 'left', label: 'Subtítulo', field: (row) => row.subtitle, headerStyle: 'width: 200px' },
-  { name: 'sort_order', align: 'left', label: 'Orden', field: (row) => row.sort_order, sortable: true, headerStyle: 'width: 80px' },
-  { name: 'active', align: 'left', label: 'Estado', field: (row) => row.active, headerStyle: 'width: 90px' },
-  { name: 'created_at', align: 'left', label: 'Fecha creación', field: (row) => row.created_at, headerStyle: 'width: 130px' },
-  { name: 'updated_at', align: 'left', label: 'Fecha actualización', field: (row) => row.updated_at, headerStyle: 'width: 130px' },
-  { name: 'actions', align: 'center', label: 'Acciones', field: () => '', headerStyle: 'width: 120px' },
-])
+// xs/sm (mobile + tablet chico, < 1024px): tabla y acciones compactas.
+// md/lg/xl (>= 1024px): presentación actual sin cambios.
+const isCompact = computed(() => $q.screen.lt.md)
+
+// Subtítulo y fechas se ocultan en compact para que la tabla no dependa de
+// scroll horizontal; "Acciones" nunca se oculta (solo cambia su contenido,
+// ver el body slot de la tabla).
+const columns = computed<QTableColumn<ServiceCategoryRecord>[]>(() => {
+  const cols: QTableColumn<ServiceCategoryRecord>[] = [
+    {
+      name: 'icon',
+      align: 'center',
+      label: isCompact.value ? '' : 'Icono',
+      field: (row) => row.icon,
+      headerStyle: isCompact.value ? 'width: 44px' : 'width: 70px',
+    },
+    {
+      name: 'title',
+      align: 'left',
+      label: 'Título',
+      field: (row) => row.title,
+      headerStyle: isCompact.value ? '' : 'width: 150px',
+    },
+  ]
+
+  if (!isCompact.value) {
+    cols.push({
+      name: 'subtitle',
+      align: 'left',
+      label: 'Subtítulo',
+      field: (row) => row.subtitle,
+      headerStyle: 'width: 200px',
+    })
+  }
+
+  cols.push(
+    {
+      name: 'sort_order',
+      align: 'left',
+      label: isCompact.value ? 'Ord.' : 'Orden',
+      field: (row) => row.sort_order,
+      sortable: true,
+      headerStyle: isCompact.value ? 'width: 50px' : 'width: 80px',
+    },
+    {
+      name: 'active',
+      align: 'left',
+      label: 'Estado',
+      field: (row) => row.active,
+      headerStyle: isCompact.value ? 'width: 78px' : 'width: 90px',
+    }
+  )
+
+  if (!isCompact.value) {
+    cols.push(
+      { name: 'created_at', align: 'left', label: 'Fecha creación', field: (row) => row.created_at, headerStyle: 'width: 130px' },
+      { name: 'updated_at', align: 'left', label: 'Fecha actualización', field: (row) => row.updated_at, headerStyle: 'width: 130px' }
+    )
+  }
+
+  cols.push({
+    name: 'actions',
+    align: 'center',
+    label: isCompact.value ? '' : 'Acciones',
+    field: () => '',
+    headerStyle: isCompact.value ? 'width: 52px' : 'width: 120px',
+  })
+
+  return cols
+})
 
 // --- Explorador visual de iconos, agrupado por categorías de negocio ---
 const iconCategories = [
@@ -717,7 +822,7 @@ const openEditRegister = (row: ServiceCategoryRecord) => {
 
 const openContentManager = (row: ServiceCategoryRecord) => {
   store.selectService(row)
-  router.push({ name: 'ServiciosContenido' })
+  router.push({ name: 'ServiciosContenido', params: { hash_id: String(row.hash_id ?? row.id) } })
 }
 
 const confirmSubmit = () => {
@@ -735,6 +840,14 @@ const confirmSubmit = () => {
   })
 }
 
+// El modal de filtros solo se cierra si la búsqueda realmente tuvo éxito;
+// si falla, store.search() ya notificó el error y el usuario puede corregir
+// los filtros sin perder lo que capturó.
+const attemptSearch = async () => {
+  const ok = await store.search()
+  if (ok) dialog.value = false
+}
+
 onMounted(() => {
   store.getRegisters()
 })
@@ -749,6 +862,8 @@ thead tr:first-child th {
 .servicio-modal-card {
   border-radius: 8px;
   overflow: hidden;
+  width: 700px;
+  max-width: 90vw;
 }
 
 .servicio-modal-header {
@@ -820,5 +935,81 @@ thead tr:first-child th {
   color: white;
   padding: 5px;
   font-size: 20px;
+}
+
+/* ===== Responsive ===== */
+
+.servicios-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.servicios-toolbar-btn {
+  min-height: 40px;
+}
+
+.actions-menu-btn {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+/* En compacto, table-layout:auto ignora los headerStyle angostos y deja que
+   el contenido (chips, botones) estire las columnas hasta forzar overflow.
+   Con fixed, el ancho de <th> manda de verdad y el texto sobrante se
+   trunca con ellipsis en vez de empujar "Acciones" fuera de la vista. */
+.compact-table :deep(table) {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.compact-table :deep(th),
+.compact-table :deep(td) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.responsive-modal-card {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.responsive-modal-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.responsive-modal-body {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.responsive-modal-actions {
+  flex-shrink: 0;
+  padding: 12px 16px;
+}
+
+@media (max-width: 599px) {
+  .servicios-toolbar {
+    flex-direction: column;
+  }
+
+  .servicios-toolbar-btn {
+    width: 100%;
+  }
+
+  /* :maximized fuerza width/height:100% en la tarjeta; sin este reset el
+     max-width/max-height pensado para desktop (90vh, 90vw, 95vw) le sigue
+     ganando y deja márgenes en blanco alrededor del modal maximizado. */
+  .responsive-modal-card {
+    max-width: 100vw;
+    max-height: 100vh;
+  }
 }
 </style>
