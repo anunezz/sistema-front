@@ -59,7 +59,7 @@ export const useCatServiciosStore = defineStore('catServicios', {
   }),
 
   actions: {
-    async getRegisters(props?: QTableRequestProps) {
+    async getRegisters(props?: QTableRequestProps): Promise<boolean> {
       if (props?.pagination) {
         this.pagination = { ...this.pagination, ...props.pagination }
       }
@@ -83,17 +83,22 @@ export const useCatServiciosStore = defineStore('catServicios', {
             rowsPerPage: response.data.data.per_page,
             rowsNumber: response.data.data.total,
           }
+          return true
         }
+        return false
       } catch {
         genericErrorNotify()
+        return false
       } finally {
         Loading.hide()
       }
     },
 
-    search() {
+    // Devuelve si la búsqueda fue exitosa para que la vista pueda cerrar el
+    // modal de filtros solo cuando la consulta realmente funcionó.
+    search(): Promise<boolean> {
       this.pagination.page = 1
-      this.getRegisters()
+      return this.getRegisters()
     },
 
     clearFilters() {
@@ -110,6 +115,26 @@ export const useCatServiciosStore = defineStore('catServicios', {
 
     selectService(row: ServiceCategoryRecord) {
       this.selectedService = row
+    },
+
+    // Reconstruye selectedService desde la API cuando se entra directo a la
+    // URL de Contenido (F5, link directo) y Pinia no trae el registro
+    // porque no persiste entre recargas.
+    async loadServiceByHashId(hashId: string): Promise<boolean> {
+      Loading.show()
+      try {
+        const response = await CatServiciosServices.edit(hashId)
+        if (response.data.success) {
+          this.selectedService = response.data.data
+          return true
+        }
+        return false
+      } catch {
+        genericErrorNotify()
+        return false
+      } finally {
+        Loading.hide()
+      }
     },
 
     editRegister(row: ServiceCategoryRecord) {

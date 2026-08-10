@@ -1,7 +1,5 @@
 import {RouterView} from "vue-router";
-import { Notify } from "quasar";
 import { hasPermissionGuard } from "src/router/permission-guard";
-import { useCatServiciosStore } from "src/stores/CatServicios";
 
 export default {
 	path: 'servicios',
@@ -15,23 +13,14 @@ export default {
 			meta:{requiredPermission: 'servicios'}
 		},
 		{
-			path: 'contenido',
+			// El hash_id del servicio va en la URL (no solo en Pinia) para que
+			// F5 / abrir la URL directamente pueda reconstruir el contexto
+			// consultando la API, igual que Form_request.vue usa
+			// route.params.hash_id para las solicitudes.
+			path: 'contenido/:hash_id',
 			name: 'ServiciosContenido',
 			component: () => import('src/views/administration/servicios/Contenido.vue'),
-			meta:{requiredPermission: 'servicios'},
-			beforeEnter: (to, from, next) => {
-				const store = useCatServiciosStore();
-				if (!store.selectedService) {
-					Notify.create({
-						type: 'warning',
-						message: 'Selecciona un servicio',
-						caption: 'Primero debes elegir un servicio desde el listado para administrar su contenido.'
-					});
-					next({ name: 'IndexServicios' });
-					return;
-				}
-				next();
-			}
+			meta:{requiredPermission: 'servicios'}
 		},
 		/*{
 			path: 'nuevo',

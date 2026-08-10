@@ -147,10 +147,22 @@
 		>
 
 			<q-carousel-slide
-				v-for="(slider, idx) in selectedCategory?.content?.slider_items" :key="idx"
+				v-for="(slider, idx) in selectedCategory?.content?.slider_items" :key="slider.id ?? idx"
 				:name="idx"
-				img-src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=1400&auto=format&fit=crop"
+				class="slider-item-slide"
 			>
+
+				<div
+					class="carousel-slide-bg"
+					:style="sliderImageUrl(slider) ? { backgroundImage: `url(${sliderImageUrl(slider)})` } : {}"
+				>
+					<q-icon
+						v-if="!sliderImageUrl(slider)"
+						name="image"
+						size="72px"
+						color="grey-8"
+					/>
+				</div>
 
 				<div class="carousel-overlay"></div>
 
@@ -194,8 +206,13 @@ const slideAbout = ref(0)
 
 import type {
   ServiceCategory,
- // ServiceSlider
+  ServiceSliderItem
 } from 'src/interfaces/service'
+
+const sliderImageUrl = (slider: ServiceSliderItem): string | null => {
+  if (!slider.image?.path) return null
+  return `${process.env.API_URL}${slider.image.path}`
+}
 
 
 
@@ -567,6 +584,22 @@ watch(
 }
 
 
+
+.slider-item-slide {
+  padding: 0 !important;
+}
+
+.carousel-slide-bg {
+  position: absolute;
+  inset: 0;
+  background-color: #1a1a1a;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 .carousel-overlay {
 

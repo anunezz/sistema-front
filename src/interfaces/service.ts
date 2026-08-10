@@ -34,7 +34,9 @@ export interface ServiceSliderItem {
 
     active: boolean
 
-    images: Image[]
+    image_id: number | null
+
+    image: Image | null
 
 }
 
@@ -50,7 +52,7 @@ export interface ServiceContent {
 
     content: string
 
-    sliderItems: ServiceSliderItem[]
+    slider_items: ServiceSliderItem[]
 
 }
 
