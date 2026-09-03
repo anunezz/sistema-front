@@ -6,15 +6,15 @@
 	/>
 	<br />
 	<div class="q-pa-md">
-		<div class="row">
-			<div class="col-9">
+		<div class="row items-center users-toolbar">
+			<div class="col-12 col-sm-9 users-toolbar-search">
 				<q-input
 					dense
 					outlined
 					clearable
 					size="12px"
 					clear-icon="fas fa-eraser"
-					:style="'width:' + ($q.screen.width <= 468 ? '100%' : '45%')"
+					class="full-width"
 					placeholder="Ingrese un dato para iniciar una búsqueda:"
 					v-model="search"
 					v-max="100"
@@ -29,21 +29,15 @@
 					</template>
 				</q-input>
 			</div>
-			<div class="col-3">
+			<div class="col-12 col-sm-3 users-toolbar-btn-wrap">
 				<q-btn
 					color="primary"
 					outline
 					size="12px"
 					label="Nuevo Usuario"
 					icon="fas fa-plus-circle"
-					@click="
-						clearForm();
-						showDialogToCreateEditUser = true
-					"
-					:style="
-						'background: #877350;float:right;width:' +
-						($q.screen.width <= 468 ? '100%' : '')
-					"
+					class="full-width users-toolbar-btn new-user-btn"
+					@click="openNewUserDialog"
 				/>
 			</div>
 		</div>
@@ -62,6 +56,7 @@
 			"
 			flat
 			bordered
+			:class="{ 'compact-table': isCompact }"
 			v-model:pagination="pagination"
 			:rows-per-page-options="[5, 10, 20, 50, 100]"
 			@request="getRegisters"
@@ -86,61 +81,137 @@
 						{{ props.row.full_name }}
 					</q-td>
 
-					<q-td>
+					<q-td v-if="!isCompact">
 						{{
 							props.row.usuario_perfil ? props.row.usuario_perfil.perfil.perfil : null
 						}}
 					</q-td>
-					<q-td style="text-align: center">
+					<q-td v-if="!isCompact" style="text-align: center">
 						{{ props.row.is_barbero ? 'Sí' : 'No' }}
 					</q-td>
-					<q-td style="width: 10%; text-align: center">
-						<q-btn
-							style="margin-right: 5px"
-							color="positive"
-							size="sm"
-							@click="editUser(props.row.hash_id)"
-						>
-							<i class="far fa-edit" style="font-size: 15px" />
-							<q-tooltip anchor="top middle" self="center middle"> Editar </q-tooltip>
-						</q-btn>
-						<q-btn
-							style="margin-right: 5px; background: #1976d2; color: white"
-							size="sm"
-							@click="showUser(props.row.hash_id)"
-						>
-							<q-icon name="fas fa-eye" style="font-size: 15px"></q-icon>
-							<q-tooltip anchor="top middle" self="center middle"> Ver </q-tooltip>
-						</q-btn>
-						<q-btn
-							:color="props.row.bol_eliminado ? 'positive' : 'red'"
-							size="sm"
-							@click="
-								disableOrEnableUserDialog(
-									props.row.hash_id,
-									props.row.bol_eliminado,
-									props.row.username,
-								)
-							"
-						>
-							<q-icon
-								:name="
-									props.row.bol_eliminado
-										? 'fa-solid fa-user-check'
-										: 'fa-solid fa-user-slash'
+					<q-td align="center">
+						<!-- Desktop/tablet grande: 3 botones inline, como siempre.
+						     Compacto (< 1024px): mismas 3 acciones agrupadas en un menú
+						     "⋮" (mismo patrón que views/administration/servicios/Index.vue)
+						     — ninguna acción se elimina, table-layout:fixed (ver
+						     .compact-table) evita que esta columna quede fuera de la
+						     vista o que los botones se encimen. -->
+						<q-btn-group v-if="!isCompact">
+							<q-btn color="positive" size="sm" @click="editUser(props.row.hash_id)">
+								<i class="far fa-edit" style="font-size: 15px" />
+								<q-tooltip anchor="top middle" self="center middle">
+									Editar
+								</q-tooltip>
+							</q-btn>
+							<q-btn
+								style="background: #1976d2; color: white"
+								size="sm"
+								@click="showUser(props.row.hash_id)"
+							>
+								<q-icon name="fas fa-eye" style="font-size: 15px"></q-icon>
+								<q-tooltip anchor="top middle" self="center middle">
+									Ver
+								</q-tooltip>
+							</q-btn>
+							<q-btn
+								:color="props.row.bol_eliminado ? 'positive' : 'red'"
+								size="sm"
+								@click="
+									disableOrEnableUserDialog(
+										props.row.hash_id,
+										props.row.bol_eliminado,
+										props.row.username,
+									)
 								"
-								style="font-size: 15px"
-							/>
-							<q-tooltip anchor="top middle" self="center middle">
-								{{ props.row.bol_eliminado ? 'Activar' : 'Desactivar' }}
-							</q-tooltip>
+							>
+								<q-icon
+									:name="
+										props.row.bol_eliminado
+											? 'fa-solid fa-user-check'
+											: 'fa-solid fa-user-slash'
+									"
+									style="font-size: 15px"
+								/>
+								<q-tooltip anchor="top middle" self="center middle">
+									{{ props.row.bol_eliminado ? 'Activar' : 'Desactivar' }}
+								</q-tooltip>
+							</q-btn>
+						</q-btn-group>
+
+						<q-btn
+							v-else
+							round
+							flat
+							color="grey-8"
+							icon="more_vert"
+							size="md"
+							class="actions-menu-btn"
+						>
+							<q-menu anchor="bottom right" self="top right">
+								<q-list style="min-width: 180px">
+									<q-item
+										clickable
+										v-close-popup
+										@click="editUser(props.row.hash_id)"
+									>
+										<q-item-section avatar>
+											<q-icon color="positive" name="far fa-edit" />
+										</q-item-section>
+										<q-item-section>Editar</q-item-section>
+									</q-item>
+									<q-item
+										clickable
+										v-close-popup
+										@click="showUser(props.row.hash_id)"
+									>
+										<q-item-section avatar>
+											<q-icon color="primary" name="fas fa-eye" />
+										</q-item-section>
+										<q-item-section>Ver</q-item-section>
+									</q-item>
+									<q-item
+										clickable
+										v-close-popup
+										@click="
+											disableOrEnableUserDialog(
+												props.row.hash_id,
+												props.row.bol_eliminado,
+												props.row.username,
+											)
+										"
+									>
+										<q-item-section avatar>
+											<q-icon
+												:color="
+													props.row.bol_eliminado
+														? 'positive'
+														: 'negative'
+												"
+												:name="
+													props.row.bol_eliminado
+														? 'fa-solid fa-user-check'
+														: 'fa-solid fa-user-slash'
+												"
+											/>
+										</q-item-section>
+										<q-item-section>{{
+											props.row.bol_eliminado ? 'Activar' : 'Desactivar'
+										}}</q-item-section>
+									</q-item>
+								</q-list>
+							</q-menu>
 						</q-btn>
 					</q-td>
 				</q-tr>
 			</template>
 		</q-table>
-		<q-dialog v-model="showDialogToCreateEditUser" persistent>
-			<q-card style="min-width: 800px; min-height: 400px">
+		<q-dialog
+			v-model="showDialogToCreateEditUser"
+			persistent
+			transition-show="scale"
+			:maximized="$q.screen.xs"
+		>
+			<q-card class="user-modal-card" style="min-height: 400px">
 				<q-form @submit="onSubmit" @reset="onReset">
 					<q-card-section style="background-color: #c39326" class="text-white">
 						<div class="text-h6">
@@ -166,7 +237,7 @@
 					<q-card-section>
 						<div class="q-pa-md">
 							<div class="row">
-								<div class="col-6 q-pa-md">
+								<div class="col-12 col-sm-6 q-pa-md">
 									<q-input
 										dense
 										:readonly="onlyRead"
@@ -179,7 +250,7 @@
 										:rules="nombreUsuarioRules"
 									/>
 								</div>
-								<div class="col-6 q-pa-md">
+								<div class="col-12 col-sm-6 q-pa-md">
 									<q-input
 										dense
 										:readonly="onlyRead"
@@ -192,7 +263,7 @@
 										:rules="primerApellidoUsuarioRules"
 									/>
 								</div>
-								<div class="col-6 q-pa-md">
+								<div class="col-12 col-sm-6 q-pa-md">
 									<q-input
 										dense
 										:readonly="onlyRead"
@@ -205,7 +276,7 @@
 										:rules="segundoApellidoUsuarioRules"
 									/>
 								</div>
-								<div class="col-6 q-pa-md">
+								<div class="col-12 col-sm-6 q-pa-md">
 									<q-input
 										dense
 										:readonly="onlyRead"
@@ -217,7 +288,7 @@
 										:rules="correoElectronicoUsuarioRules"
 									/>
 								</div>
-								<div class="col-6 q-pa-md">
+								<div class="col-12 col-sm-6 q-pa-md">
 									<q-select
 										clearable
 										dense
@@ -235,7 +306,7 @@
 										@clear="clearProfile"
 									/>
 								</div>
-								<div class="col-6 q-pa-md flex items-center">
+								<div class="col-12 col-sm-6 q-pa-md flex items-center">
 									<q-checkbox
 										:disable="onlyRead"
 										v-model="formUser.is_barbero"
@@ -244,10 +315,10 @@
 								</div>
 							</div>
 							<div class="row">
-								<div class="col-3 q-pa-md">
+								<div class="col-12 col-sm-3 q-pa-md">
 									<p class="text-weight-bold">Permisos:</p>
 								</div>
-								<div class="col-8 q-pa-md">
+								<div class="col-12 col-sm-8 q-pa-md">
 									<q-tree
 										dense
 										:nodes="permissionTree"
@@ -359,7 +430,7 @@
 </template>
 <script setup>
 import HeaderSection from 'components/HeaderSection.vue'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 import { useQuasar } from 'quasar'
 
 import useNotify from 'src/composables/useNotify'
@@ -386,41 +457,36 @@ const pagination = ref({
 	rowsPerPage: 10,
 	rowsNumber: 0,
 })
-const columns = ref([
-	{
-		name: 'id_usuario',
-		align: 'left',
-		label: 'ID',
-	},
-	{
-		name: 'username',
-		align: 'left',
-		label: 'usuario',
-		field: (row) => row.usuario,
-	},
-	{
-		name: 'full_name',
-		align: 'left',
-		label: 'Nombre de usuario',
-	},
-	{
-		name: 'profile',
-		align: 'left',
-		label: 'Perfil',
-		field: (row) => row.correo,
-	},
-	{
-		name: 'is_barbero',
-		align: 'center',
-		label: 'Barbero',
-	},
-	{
+// Mismo criterio que views/administration/servicios/Index.vue (referencia
+// responsive del proyecto) y agenda/BloqueosTab.vue: < 1024px = tabla
+// compacta. Se ocultan solo "Perfil" y "Barbero" (secundarias); ID, Usuario,
+// Nombre y Acciones siempre visibles — ninguna acción se elimina, ver el
+// body slot (q-btn-group en desktop, menú "⋮" en compacto).
+const isCompact = computed(() => $q.screen.lt.md)
+
+const columns = computed(() => {
+	const cols = [
+		{ name: 'id_usuario', align: 'left', label: 'ID' },
+		{ name: 'username', align: 'left', label: 'usuario', field: (row) => row.usuario },
+		{ name: 'full_name', align: 'left', label: 'Nombre de usuario' },
+	]
+
+	if (!isCompact.value) {
+		cols.push(
+			{ name: 'profile', align: 'left', label: 'Perfil', field: (row) => row.correo },
+			{ name: 'is_barbero', align: 'center', label: 'Barbero' },
+		)
+	}
+
+	cols.push({
 		name: 'actions',
 		align: 'center',
 		label: 'Acciones',
-		headerStyle: 'width: 300px',
-	},
-])
+		headerStyle: isCompact.value ? 'width: 60px' : 'width: 300px',
+	})
+
+	return cols
+})
 
 const catalogs = ref({
 	catPerfil: [],
@@ -728,6 +794,15 @@ const closeDialogToCreateEditUser = () => {
 	showDialogToCreateEditUser.value = false
 }
 
+// Función nombrada (no handler inline multi-sentencia): Prettier reformatea
+// @click="a; b" quitando el ';' y rompe el build del compilador de Vue
+// (ya documentado en index_page_the_planet.vue) — se evita el patrón aquí
+// también en vez de arriesgarse a que un futuro `npm run format` lo rompa.
+const openNewUserDialog = () => {
+	clearForm()
+	showDialogToCreateEditUser.value = true
+}
+
 const closeDialogToShowUser = () => {
 	onlyRead.value = false
 	clearForm()
@@ -850,5 +925,62 @@ thead tr:first-child th {
 	word-break: break-all;
 	line-height: 23px;
 	padding-right: 10px;
+}
+
+/* ===== Responsive (mismo patrón que views/administration/servicios/Index.vue) ===== */
+
+.users-toolbar {
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.new-user-btn {
+	background: #877350;
+}
+
+.actions-menu-btn {
+	min-width: 40px;
+	min-height: 40px;
+}
+
+/* En compacto, table-layout:auto deja que "Nombre de usuario" (texto libre)
+   estire las columnas hasta forzar overflow y empujar "Acciones" fuera de
+   la vista. Con fixed, el ancho manda de verdad y el texto sobrante se
+   trunca con ellipsis en vez de eso (mismo fix ya aplicado en Servicios y
+   en Agenda/BloqueosTab.vue). */
+.compact-table :deep(table) {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.compact-table :deep(th),
+.compact-table :deep(td) {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.user-modal-card {
+	min-width: 800px;
+	max-width: 95vw;
+	display: flex;
+	flex-direction: column;
+	max-height: 90vh;
+}
+
+@media (max-width: 599px) {
+	.users-toolbar-btn-wrap {
+		order: -1;
+	}
+
+	/* :maximized fuerza width/height:100% en la tarjeta; sin este reset,
+	   min-width:800px pensado para escritorio la seguiría forzando a
+	   desbordar el viewport horizontalmente (bug real reportado: "elementos
+	   se salen de la pantalla"). */
+	.user-modal-card {
+		min-width: auto;
+		max-width: 100vw;
+		max-height: 100vh;
+	}
 }
 </style>

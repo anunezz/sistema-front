@@ -1,7 +1,7 @@
 <template>
-	<q-card class="planet-calendar-card">
+	<div class="planet-calendar-card">
 		<FullCalendar ref="calendarRef" :options="calendarOptions" />
-	</q-card>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -260,7 +260,13 @@ const calendarOptions = computed(() => ({
 	// la Vista Día
 	expandRows: true,
 
-	height: isMobile.value ? 650 : 850,
+	// Móvil: 'auto' deja que FullCalendar crezca según su contenido real
+	// (antes 650px fijo comprimía filas/eventos en pantallas chicas — el
+	// motivo real de la queja de "calendario demasiado compacto" en
+	// celular). La página scrollea si hace falta (spec: "si el calendario
+	// necesita scroll horizontal/vertical para conservar legibilidad, puede
+	// usarse"), en vez de forzar todo el contenido dentro de una altura fija.
+	height: isMobile.value ? 'auto' : 850,
 
 	// Vista pública (showDayNav=false, por defecto): solo Hoy / Día / Semana /
 	// Mes — sin "Anterior"/"Siguiente", el calendario no navega fuera del mes
@@ -455,6 +461,8 @@ defineExpose({
 	padding: 15px;
 	overflow: hidden;
 	max-width: 100%;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 .planet-calendar-card :deep(.fc) {
@@ -640,13 +648,18 @@ defineExpose({
 /* RESPONSIVE */
 
 @media (max-width: 768px) {
+	.planet-calendar-card {
+		padding: 8px;
+		border-radius: 14px;
+	}
+
 	.planet-calendar-card :deep(.fc) {
-		font-size: 11px;
+		font-size: 12px;
 	}
 
 	.planet-calendar-card :deep(.fc-toolbar) {
 		flex-direction: column;
-		gap: 10px;
+		gap: 8px;
 	}
 
 	.planet-calendar-card :deep(.fc-toolbar-title) {
@@ -654,8 +667,46 @@ defineExpose({
 	}
 
 	.planet-calendar-card :deep(.fc-button) {
-		padding: 5px 8px !important;
-		font-size: 10px !important;
+		padding: 7px 10px !important;
+		font-size: 12px !important;
+		min-height: 34px;
+	}
+
+	/* Eventos: más alto por línea y sin recorte agresivo de texto — con
+	   height:'auto' (ver calendarOptions) las filas ya no compiten por
+	   espacio dentro de una altura fija, así que una cita puede mostrar su
+	   horario y título completos en dos líneas en vez de una sola cortada. */
+	.planet-calendar-card :deep(.fc-event) {
+		font-size: 11px;
+		line-height: 1.35;
+		padding: 2px 4px;
+	}
+
+	.planet-calendar-card :deep(.fc-daygrid-day-number),
+	.planet-calendar-card :deep(.fc-col-header-cell-cushion) {
+		font-size: 12px;
+	}
+
+	.planet-calendar-card :deep(.fc-timegrid-slot-label) {
+		font-size: 11px;
+	}
+}
+
+@media (max-width: 768px) and (min-width: 481px) {
+	/* Tablet chico: un punto intermedio entre desktop y celular — algo más
+	   de aire que en el breakpoint de celular de abajo. */
+	.planet-calendar-card :deep(.fc) {
+		font-size: 13px;
+	}
+}
+
+@media (max-width: 480px) {
+	.planet-calendar-card {
+		padding: 6px;
+	}
+
+	.planet-calendar-card :deep(.fc-toolbar-title) {
+		font-size: 14px !important;
 	}
 }
 </style>
