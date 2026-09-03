@@ -68,7 +68,7 @@ const menuList = ref([
     childs:[
       { id:1, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Inicio', routeName: 'InboxRequests', color: "#343434",permission:'inicio'},
       { id:2, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Servicios', routeName: 'IndexServicios', color: "#343434",permission:'servicios'},
-      { id:3, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Agenda', routeName: 'InboxRequests', color: "#343434",permission:'agenda'},
+      { id:3, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Agenda', routeName: 'IndexAgenda', color: "#343434",permission:'agenda'},
       { id:4, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Productos', routeName: 'InboxRequests', color: "#343434",permission:'productos'},
       { id:5, icon: '',iconImage:iconBandejaSolicitudes ,moduleName: 'Contacto', routeName: 'InboxRequests', color: "#343434",permission:'contacto'},
 	  { id:6, icon: '', iconImage: iconAdminCatalogos,moduleName: 'Administración de Catálogos', routeName: 'CatalogsIndex', color: "#343434",permission:'catalog_management'},
