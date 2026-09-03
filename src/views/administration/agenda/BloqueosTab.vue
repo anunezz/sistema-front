@@ -1,14 +1,30 @@
 <template>
 	<div class="q-pa-md">
-		<div class="row justify-end q-mb-md">
-			<q-btn color="primary" icon="add" label="Nuevo bloqueo" @click="formOpen = true" />
+		<div class="row justify-end q-mb-md bloqueos-toolbar">
+			<q-btn
+				color="primary"
+				icon="add"
+				label="Nuevo bloqueo"
+				class="bloqueos-toolbar-btn"
+				@click="formOpen = true"
+			/>
 		</div>
 
-		<q-table :rows="rows" :columns="columns" row-key="hash_id" flat bordered :loading="loading">
+		<q-table
+			:rows="rows"
+			:columns="columns"
+			row-key="hash_id"
+			flat
+			bordered
+			:loading="loading"
+			:class="{ 'compact-table': isCompact }"
+		>
 			<template v-slot:body="props">
 				<q-tr :props="props">
 					<q-td>{{ formatRange(props.row) }}</q-td>
-					<q-td>{{ props.row.all_day ? 'Todo el día' : 'Horario específico' }}</q-td>
+					<q-td v-if="!isCompact">{{
+						props.row.all_day ? 'Todo el día' : 'Horario específico'
+					}}</q-td>
 					<q-td>{{ props.row.reason || '—' }}</q-td>
 					<q-td align="center">
 						<q-chip
@@ -47,8 +63,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { Dialog, Notify } from 'quasar'
+import { ref, computed, onMounted } from 'vue'
+import { Dialog, Notify, useQuasar } from 'quasar'
 import type { QTableColumn } from 'quasar'
 import DeleteAlert from 'components/DeleteAlert.vue'
 import BlockManagerDialog from './BlockManagerDialog.vue'
@@ -60,18 +76,35 @@ import type { ScheduleBlockRecord } from 'src/interfaces/agenda'
 // Reutiliza ScheduleBlockApi (index/store/remove) y BlockManagerDialog
 // (reducido a solo el formulario de alta) sin duplicar su lógica.
 const emit = defineEmits(['changed'])
+const $q = useQuasar()
 
 const rows = ref<ScheduleBlockRecord[]>([])
 const loading = ref(false)
 const formOpen = ref(false)
 
-const columns: QTableColumn<ScheduleBlockRecord>[] = [
-	{ name: 'range', label: 'Fecha / horario', field: 'starts_at', align: 'left' },
-	{ name: 'type', label: 'Tipo', field: 'all_day', align: 'left' },
-	{ name: 'reason', label: 'Motivo', field: 'reason', align: 'left' },
-	{ name: 'active', label: 'Estado', field: 'active', align: 'center' },
-	{ name: 'actions', label: 'Acciones', field: () => '', align: 'center' },
-]
+// Mismo criterio que views/administration/servicios/Index.vue (referencia
+// responsive del proyecto): xs/sm (< 1024px) = tabla compacta, oculta solo
+// la columna menos esencial ("Tipo", inferible de "Fecha/horario"); "Motivo"
+// y "Acciones" nunca se ocultan.
+const isCompact = computed(() => $q.screen.lt.md)
+
+const columns = computed<QTableColumn<ScheduleBlockRecord>[]>(() => {
+	const cols: QTableColumn<ScheduleBlockRecord>[] = [
+		{ name: 'range', label: 'Fecha / horario', field: 'starts_at', align: 'left' },
+	]
+
+	if (!isCompact.value) {
+		cols.push({ name: 'type', label: 'Tipo', field: 'all_day', align: 'left' })
+	}
+
+	cols.push(
+		{ name: 'reason', label: 'Motivo', field: 'reason', align: 'left' },
+		{ name: 'active', label: 'Estado', field: 'active', align: 'center' },
+		{ name: 'actions', label: 'Acciones', field: () => '', align: 'center' },
+	)
+
+	return cols
+})
 
 const formatRange = (row: ScheduleBlockRecord) => {
 	const date = row.starts_at.slice(0, 10)
@@ -122,3 +155,32 @@ const confirmRemove = (row: ScheduleBlockRecord) => {
 
 onMounted(load)
 </script>
+
+<style scoped>
+/* Mismo patrón que views/administration/servicios/Index.vue: table-layout
+   fixed en compacto evita que "Motivo" (texto libre, puede ser largo)
+   empuje la columna "Acciones" fuera de la vista — se trunca con ellipsis
+   en vez de eso. */
+.compact-table :deep(table) {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.compact-table :deep(th),
+.compact-table :deep(td) {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.bloqueos-toolbar {
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+@media (max-width: 599px) {
+	.bloqueos-toolbar-btn {
+		width: 100%;
+	}
+}
+</style>

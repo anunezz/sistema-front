@@ -16,17 +16,22 @@
 
 	<q-separator class="q-mx-md q-mt-md" />
 
-	<q-tab-panels v-model="tab" animated class="bg-transparent">
-		<q-tab-panel name="calendario">
-			<calendario-tab ref="calendarioTabRef" />
-		</q-tab-panel>
-		<q-tab-panel name="horario">
-			<horario-tab />
-		</q-tab-panel>
-		<q-tab-panel name="bloqueos">
-			<bloqueos-tab @changed="onBlocksChanged" />
-		</q-tab-panel>
-	</q-tab-panels>
+	<!-- v-if (no q-tab-panels) a propósito: cada TAB debe reinicializarse y
+	     recargar sus datos desde cero cada vez que se selecciona (spec de
+	     corrección de Tabs) — q-tab-panels mantiene los tres tabs montados en
+	     segundo plano (comportamiento tipo v-show) y NUNCA los remonta al
+	     volver a uno ya visitado, lo que obligaba antes a refrescar
+	     manualmente vía ref (ver onBlocksChanged, ya no necesario: al volver
+	     a "Calendario" el propio onMounted del componente vuelve a correr).
+	     v-if desmonta el tab inactivo y crea una instancia nueva al
+	     reactivarlo, sin animación de slide (se pierde ese detalle visual,
+	     pero es justo el mecanismo que garantiza "una sola carga por
+	     inicialización" sin peticiones en segundo plano de tabs no visibles. -->
+	<div class="q-pa-none">
+		<calendario-tab v-if="tab === 'calendario'" />
+		<horario-tab v-else-if="tab === 'horario'" />
+		<bloqueos-tab v-else-if="tab === 'bloqueos'" />
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -44,14 +49,4 @@ import BloqueosTab from './BloqueosTab.vue'
 
 const iconModule = ref(imageRoute)
 const tab = ref('calendario')
-const calendarioTabRef = ref<InstanceType<typeof CalendarioTab> | null>(null)
-
-// Bloqueos ya no es un modal: es su propio tab (BloqueosTab). Un alta/baja
-// ahí puede cambiar tanto las citas visibles (auto-cancel por traslape) como
-// las franjas "CERRADO" del calendario — q-tab-panels mantiene CalendarioTab
-// montado en segundo plano, así que se refresca explícitamente vía su
-// método expuesto en vez de esperar a que se remonte solo.
-const onBlocksChanged = () => {
-	calendarioTabRef.value?.reload()
-}
 </script>

@@ -27,11 +27,12 @@
 			rows-per-page-label="Registros por página"
 			v-model:pagination="pagination"
 			:rows-per-page-options="[5, 10, 20, 50]"
+			:class="{ 'compact-table': isCompact }"
 			@request="onRequest"
 		>
 			<template v-slot:body="props">
 				<q-tr :props="props">
-					<q-td style="text-align: center">
+					<q-td v-if="!isCompact" style="text-align: center">
 						<q-img
 							v-if="props.row.image?.path"
 							:src="mediaUrl(props.row.image.path)"
@@ -41,7 +42,7 @@
 						<span v-else class="text-grey">Sin imagen</span>
 					</q-td>
 					<q-td>{{ props.row.title }}</q-td>
-					<q-td>{{ props.row.subtitle || '—' }}</q-td>
+					<q-td v-if="!isCompact">{{ props.row.subtitle || '—' }}</q-td>
 					<q-td>{{ formatPrice(props.row.price) }}</q-td>
 					<q-td>
 						<q-chip
@@ -54,7 +55,13 @@
 						</q-chip>
 					</q-td>
 					<q-td align="center">
-						<q-btn-group>
+						<!-- Desktop/tablet grande: botones inline. Compacto (< 1024px):
+						     mismas acciones agrupadas en un menú "⋮" (mismo patrón que
+						     views/administration/servicios/Index.vue y
+						     views/administration/users/Index.vue) — ninguna acción se
+						     elimina, table-layout:fixed (.compact-table) evita que esta
+						     columna quede fuera de la vista o que los botones se encimen. -->
+						<q-btn-group v-if="!isCompact">
 							<q-btn
 								size="sm"
 								color="positive"
@@ -74,6 +81,42 @@
 								}}</q-tooltip>
 							</q-btn>
 						</q-btn-group>
+
+						<q-btn
+							v-else
+							round
+							flat
+							color="grey-8"
+							icon="more_vert"
+							size="md"
+							class="actions-menu-btn"
+						>
+							<q-menu anchor="bottom right" self="top right">
+								<q-list style="min-width: 180px">
+									<q-item clickable v-close-popup @click="openEdit(props.row)">
+										<q-item-section avatar>
+											<q-icon color="positive" name="edit" />
+										</q-item-section>
+										<q-item-section>Editar</q-item-section>
+									</q-item>
+									<q-item
+										clickable
+										v-close-popup
+										@click="confirmToggleActive(props.row)"
+									>
+										<q-item-section avatar>
+											<q-icon
+												:color="props.row.active ? 'warning' : 'primary'"
+												:name="props.row.active ? 'block' : 'check_circle'"
+											/>
+										</q-item-section>
+										<q-item-section>{{
+											props.row.active ? 'Desactivar' : 'Activar'
+										}}</q-item-section>
+									</q-item>
+								</q-list>
+							</q-menu>
+						</q-btn>
 					</q-td>
 				</q-tr>
 			</template>
@@ -245,20 +288,36 @@ const pagination = ref({
 	descending: false,
 })
 
-const columns: QTableColumn<ProductRecord>[] = [
-	{
-		name: 'image',
-		label: 'Imagen',
+// xs/sm (mobile + tablet chico, < 1024px): tabla y acciones compactas.
+// md/lg/xl (>= 1024px): presentación actual sin cambios.
+const isCompact = computed(() => $q.screen.lt.md)
+
+const columns = computed<QTableColumn<ProductRecord>[]>(() => {
+	const cols: QTableColumn<ProductRecord>[] = []
+	if (!isCompact.value) {
+		cols.push({
+			name: 'image',
+			label: 'Imagen',
+			field: () => '',
+			align: 'center',
+			headerStyle: 'width: 90px',
+		})
+	}
+	cols.push({ name: 'title', label: 'Título', field: 'title', align: 'left' })
+	if (!isCompact.value) {
+		cols.push({ name: 'subtitle', label: 'Subtítulo', field: 'subtitle', align: 'left' })
+	}
+	cols.push({ name: 'price', label: 'Costo', field: 'price', align: 'left' })
+	cols.push({ name: 'active', label: 'Estado', field: 'active', align: 'left' })
+	cols.push({
+		name: 'actions',
+		label: isCompact.value ? '' : 'Acciones',
 		field: () => '',
 		align: 'center',
-		headerStyle: 'width: 90px',
-	},
-	{ name: 'title', label: 'Título', field: 'title', align: 'left' },
-	{ name: 'subtitle', label: 'Subtítulo', field: 'subtitle', align: 'left' },
-	{ name: 'price', label: 'Costo', field: 'price', align: 'left' },
-	{ name: 'active', label: 'Estado', field: 'active', align: 'left' },
-	{ name: 'actions', label: 'Acciones', field: () => '', align: 'center' },
-]
+		headerStyle: isCompact.value ? 'width: 52px' : undefined,
+	})
+	return cols
+})
 
 // Solo los productos del Servicio padre actual — nunca de otro (mismo
 // criterio que ServiciosAgendables.vue: filtro service_category_id vía
@@ -474,5 +533,27 @@ onMounted(async () => {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+}
+
+.actions-menu-btn {
+	min-width: 40px;
+	min-height: 40px;
+}
+
+/* En compacto, table-layout:auto ignora los headerStyle angostos y deja que
+   el contenido (chips, botones) estire las columnas hasta forzar overflow.
+   Con fixed, el ancho de <th> manda de verdad y el texto sobrante se
+   trunca con ellipsis en vez de empujar "Acciones" fuera de la vista
+   (mismo criterio que views/administration/servicios/Index.vue). */
+.compact-table :deep(table) {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.compact-table :deep(th),
+.compact-table :deep(td) {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 </style>

@@ -111,9 +111,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Notify } from 'quasar'
+import { Dialog, Notify } from 'quasar'
 import ThePlanetCalendar from 'src/components/the_planet/ThePlanetCalendar.vue'
 import StatusChip from 'src/components/the_planet/StatusChip.vue'
+import DeleteAlert from 'src/components/DeleteAlert.vue'
 import {
 	AppointmentCalendarApi,
 	WorkingHourApi,
@@ -226,8 +227,26 @@ interface DatesSetArg {
 	endStr: string
 }
 
+// CAUSA RAÍZ del bucle de peticiones (verificado en el código fuente de
+// @fullcalendar/vue3, no supuesto): `calendarOptions` en ThePlanetCalendar.vue
+// es un computed que arma un objeto `events` NUEVO cada vez que `events`
+// (este ref) cambia. El wrapper de FullCalendar vigila `options` con
+// `deep:true` (node_modules/@fullcalendar/vue3/dist/FullCalendar.js) y ante
+// cualquier cambio de referencia llama `calendar.resetOptions(...)`, lo que
+// dispara un render interno que reconstruye el dateProfile y REEMITE
+// 'datesSet' (@fullcalendar/core/index.js:1103) aunque el rango visible no
+// haya cambiado. Sin este guard: loadEvents() cambia `events` -> nuevo
+// calendarOptions -> resetOptions -> datesSet de nuevo -> loadEvents() ->
+// ciclo infinito. Comparar el rango entrante contra el ya cargado corta el
+// ciclo sin impedir la navegación real (día/semana/mes/vista sí cambian el
+// rango y sí deben recargar).
 const onDatesSet = (arg: DatesSetArg) => {
-	visibleRange.value = { start: arg.startStr.slice(0, 10), end: arg.endStr.slice(0, 10) }
+	const start = arg.startStr.slice(0, 10)
+	const end = arg.endStr.slice(0, 10)
+
+	if (visibleRange.value?.start === start && visibleRange.value?.end === end) return
+
+	visibleRange.value = { start, end }
 	loadEvents()
 }
 
@@ -249,20 +268,35 @@ const loadBlocks = async () => {
 	}
 }
 
-const saveStatus = async () => {
+// Confirmación previa antes de persistir el cambio (spec: no ejecutar el
+// cambio hasta que el barbero/admin confirme) — reutiliza DeleteAlert
+// (mismo componente genérico de confirmación ya usado en BloqueosTab.vue/
+// ServiciosTab.vue/ProductosDeServicio.vue), no uno nuevo.
+const saveStatus = () => {
 	if (!selectedId.value || !selectedStatus.value) return
 
-	savingStatus.value = true
-	try {
-		await AppointmentCalendarApi.updateStatus(selectedId.value, selectedStatus.value)
-		Notify.create({ type: 'positive', message: 'Estatus actualizado.' })
-		detailOpen.value = false
-		await loadEvents()
-	} catch {
-		Notify.create({ type: 'negative', message: 'No se pudo actualizar el estatus.' })
-	} finally {
-		savingStatus.value = false
-	}
+	Dialog.create({
+		component: DeleteAlert,
+		componentProps: {
+			icon: 'sync',
+			title: 'Actualizar estatus',
+			subtitle: `Nuevo estatus: ${selectedStatus.value}`,
+			question: '¿Deseas actualizar el estatus de esta cita?',
+			button: 'Confirmar',
+		},
+	}).onOk(async () => {
+		savingStatus.value = true
+		try {
+			await AppointmentCalendarApi.updateStatus(selectedId.value, selectedStatus.value)
+			Notify.create({ type: 'positive', message: 'Estatus actualizado.' })
+			detailOpen.value = false
+			await loadEvents()
+		} catch {
+			Notify.create({ type: 'negative', message: 'No se pudo actualizar el estatus.' })
+		} finally {
+			savingStatus.value = false
+		}
+	})
 }
 
 // Mensaje del administrador para el cliente — un mensaje vigente por cita,
@@ -283,17 +317,13 @@ const saveMessage = async () => {
 	}
 }
 
-// Un bloqueo nuevo/eliminado (alta en el tab "Bloqueos", ver Index.vue) puede
-// cambiar tanto la lista de citas visibles (auto-cancel por traslape, ver
-// ScheduleBlockCatalogService) como las franjas "CERRADO" pintadas — se
-// recargan ambas. Expuesto para que Index.vue lo invoque al cambiar de tab
-// (q-tab-panels mantiene este componente montado, no se refresca solo).
-const reload = () => {
-	loadEvents()
-	loadBlocks()
-}
-
-defineExpose({ reload })
+// Un bloqueo nuevo/eliminado (alta en el tab "Bloqueos") puede cambiar tanto
+// la lista de citas visibles (auto-cancel por traslape, ver
+// ScheduleBlockCatalogService) como las franjas "CERRADO" pintadas. Ya no
+// hace falta refrescar esto manualmente vía ref: Index.vue ahora desmonta
+// este componente al salir del tab "Calendario" (v-if, no q-tab-panels) y lo
+// vuelve a montar desde cero al reactivarlo, así que onMounted ya trae los
+// bloqueos/citas al día por sí solo.
 
 // loadEvents() ya no se llama aquí: datesSet se dispara también en el
 // render inicial de FullCalendar (ver onDatesSet), con el rango real de la

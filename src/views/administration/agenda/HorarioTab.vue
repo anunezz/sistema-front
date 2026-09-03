@@ -11,13 +11,17 @@
 					<div
 						v-for="day in days"
 						:key="day.day_of_week"
-						class="row items-center q-col-gutter-sm q-mb-sm"
+						class="row items-center q-col-gutter-sm q-mb-md day-schedule-row"
 					>
-						<div class="col-3">{{ dayLabel(day.day_of_week) }}</div>
-						<div class="col-2">
-							<q-toggle v-model="day.active" dense />
+						<!-- col-6 col-sm-* : en celular (xs) cada control ocupa la mitad
+						     del ancho (grid 2x2), evitando las 4 columnas de 25% que se
+						     amontonaban; desde "sm" (tablet/escritorio) recupera las
+						     proporciones 3/2/3/3 que ya existían, sin cambio visual. -->
+						<div class="col-6 col-sm-3 day-label">{{ dayLabel(day.day_of_week) }}</div>
+						<div class="col-6 col-sm-2">
+							<q-toggle v-model="day.active" :dense="$q.screen.gt.xs" />
 						</div>
-						<div class="col-3">
+						<div class="col-6 col-sm-3">
 							<!-- Solo Time Picker (q-time), sin captura manual de texto
 						     (spec §8/§9). -->
 							<q-input
@@ -26,6 +30,7 @@
 								:disable="!day.active"
 								dense
 								outlined
+								:label="$q.screen.xs ? 'Inicio' : ''"
 								placeholder="HH:mm"
 								:rules="day.active ? [(val) => !!val || 'Obligatoria'] : []"
 							>
@@ -46,13 +51,14 @@
 								</template>
 							</q-input>
 						</div>
-						<div class="col-3">
+						<div class="col-6 col-sm-3">
 							<q-input
 								readonly
 								v-model="day.end_time"
 								:disable="!day.active"
 								dense
 								outlined
+								:label="$q.screen.xs ? 'Fin' : ''"
 								placeholder="HH:mm"
 								:rules="
 									day.active
@@ -155,3 +161,27 @@ const save = async () => {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.day-label {
+	font-weight: 600;
+}
+
+/* Celular (xs): separa visualmente cada día (grid 2x2 día/toggle/inicio/fin,
+   ver template) para que no se vean encimados uno tras otro sin límite
+   claro — no cambia nada en tablet/escritorio (sm+ ya vuelve a la fila
+   única 3/2/3/3 de siempre). */
+@media (max-width: 599px) {
+	.day-schedule-row {
+		padding: 10px 6px;
+		border: 1px solid rgba(0, 0, 0, 0.08);
+		border-radius: 8px;
+		margin-left: 0;
+		margin-right: 0;
+	}
+
+	.day-label {
+		font-size: 1rem;
+	}
+}
+</style>

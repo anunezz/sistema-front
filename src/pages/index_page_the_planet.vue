@@ -1142,15 +1142,17 @@ function citaDetailFromCalendarEvent(event) {
 	const end = event.end
 	const pad = (n) => String(n).padStart(2, '0')
 
+	// Sin "message"/motivo aquí a propósito: el detalle por clic en el
+	// calendario público solo debe mostrar Servicio, Servicio agendable,
+	// Barbero, Día, Horario y Estatus — nada de motivo/mensaje interno (spec
+	// de la tarea de corrección de la vista pública). La consulta por folio
+	// (citaDetailFromFolioLookup) sí conserva "message": es información que
+	// el propio cliente ya puede ver de su cita, caso distinto.
 	return {
 		status: event.extendedProps.status,
 		category: event.extendedProps.category,
 		service: event.extendedProps.service,
 		barbero: event.extendedProps.barbero,
-		// Motivo de cancelación (solo viene poblado cuando status es
-		// CANCELADA, ver PublicAppointmentCalendarResource) — reutiliza el
-		// mismo campo "message" que ya mostraba el detalle de folio.
-		message: event.extendedProps.reason || undefined,
 		day: `${pad(start.getDate())}/${pad(start.getMonth() + 1)}/${start.getFullYear()}`,
 		time: `${pad(start.getHours())}:${pad(start.getMinutes())} - ${pad(end.getHours())}:${pad(end.getMinutes())}`,
 	}
