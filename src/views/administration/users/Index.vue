@@ -498,6 +498,15 @@ const permissionOriginal = ref([])
 const buildTree = (permissions, parentId = null) => {
 	return permissions
 		.filter((permission) => permission.parent_id === parentId)
+		.filter(
+			// Spec §19: 'catalog_management' (Administración de Catálogos) ya
+			// no se puede asignar — se oculta del árbol, salvo que el usuario
+			// en edición ya lo tenga (no se le revoca un permiso de un módulo
+			// que sigue activo, mismo criterio que
+			// Permission::filterAssignable() en backend).
+			(permission) =>
+				!permission.unassignable || (formUser.value.permissions || []).includes(permission.id),
+		)
 		.map((permission) => ({
 			id: permission.id,
 			display_name: permission.display_name,
@@ -505,8 +514,10 @@ const buildTree = (permissions, parentId = null) => {
 
 			// ✅ Si el perfil es 1 → checkboxes habilitados
 			//    Si no → deshabilitados (solo lectura)
-			tickable: formUser.value.id_perfil === 4,
-			disabled: formUser.value.id_perfil !== 4,
+			// unassignable: aunque ya se le muestre a quien ya lo tenía, no se
+			// puede (des)marcar desde aquí (spec §19).
+			tickable: formUser.value.id_perfil === 4 && !permission.unassignable,
+			disabled: formUser.value.id_perfil !== 4 || permission.unassignable,
 		}))
 }
 

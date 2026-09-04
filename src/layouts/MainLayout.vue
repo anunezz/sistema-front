@@ -60,6 +60,18 @@
                 <q-item
                   clickable
                   class="GL__menu-link"
+                  @click="goToPublicView">
+                  <q-item-section avatar>
+                    <q-icon name="public"/>
+                  </q-item-section>
+                  <q-item-section>
+                    Ir a la vista pública
+                  </q-item-section>
+                </q-item>
+                <q-separator/>
+                <q-item
+                  clickable
+                  class="GL__menu-link"
                   @click="logout">
                   <q-item-section avatar>
                     <q-icon name="logout"/>
@@ -122,10 +134,20 @@ import useSession from "src/composables/useSession";
 import {useAuthUserStore} from "stores/AuthUser";
 import {ref, computed, watch} from "vue";
 import {useQuasar} from "quasar";
+import {useRouter} from "vue-router";
 import MenuSideBard from "pages/MenuSideBard.vue";
 
 const {logout} = useSession()
 const store = useAuthUserStore()
+const router = useRouter()
+
+// Spec §3: reutiliza la navegación de vue-router ya existente (misma que
+// usa el resto del panel), no crea un mecanismo aparte. query.fromAdmin
+// bypassa el guard de la ruta que redirige a un admin ya autenticado hacia
+// AdministrationMenu (ver router/routes.js).
+const goToPublicView = () => {
+  router.push({ name: 'the_planet_init', query: { fromAdmin: '1' } })
+}
 const $q = useQuasar()
 
 const leftDrawerOpen = ref($q.screen.width >= 768)

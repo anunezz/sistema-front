@@ -250,6 +250,22 @@
 								</template>
 							</q-select>
 
+							<!-- Precio y duración inmediatamente al elegir el servicio agendable
+							     (spec §22) — no solo dentro del dropdown ni solo hasta el paso
+							     final de confirmación. Reutiliza selectedAppointmentService/
+							     formatPrice ya existentes, datos reales del backend. -->
+							<div
+								v-if="selectedAppointmentService"
+								class="row items-center q-gutter-sm text-white selected-service-info"
+							>
+								<span
+									v-if="formatPrice(selectedAppointmentService.price)"
+									class="text-weight-bold"
+									>{{ formatPrice(selectedAppointmentService.price) }}</span
+								>
+								<span>{{ selectedAppointmentService.duration_minutes }} min</span>
+							</div>
+
 							<!-- DÍA DE RESERVA (solo selección por calendario, sin captura manual) -->
 
 							<q-input
@@ -485,7 +501,7 @@
 						<div v-if="confirmation.barbero">
 							<b>Barbero:</b> {{ confirmation.barbero?.name }}
 						</div>
-						<div><b>Día:</b> {{ confirmation.appointment_date }}</div>
+						<div><b>Día:</b> {{ formatIsoDateDMY(confirmation.appointment_date) }}</div>
 						<div>
 							<b>Horario:</b> {{ confirmation.start_time }} -
 							{{ confirmation.end_time }}
@@ -712,7 +728,7 @@
 				<!-- CALENDARIO -->
 
 				<section id="agenda" class="q-pa-md q-pa-md-xl calendar-section">
-					<div class="text-center q-mb-xl">
+					<div class="text-center q-mb-lg">
 						<div class="text-weight-bold text-gold section-title">Agenda Tu Cita</div>
 
 						<div class="text-grey-5 q-mt-sm section-subtitle">
@@ -720,34 +736,22 @@
 						</div>
 					</div>
 
-					<ThePlanetCalendar
-						:events="calendarEvents"
-						:business-hours="calendarBounds.businessHours"
-						:slot-min-time="calendarBounds.slotMinTime"
-						:slot-max-time="calendarBounds.slotMaxTime"
-						:closed-days-of-week="calendarBounds.closedDaysOfWeek"
-						:blocks="scheduleBlocks"
-						@date-click="handleCalendarDateClick"
-						@event-click="handleCalendarEventClick"
-						@event-drop="handleCalendarEventDrop"
-						@event-resize="handleCalendarEventResize"
-						@select="handleCalendarSelect"
-					/>
-
-					<!-- CONSULTAR CITA -->
-
-					<div class="text-center q-mt-xl folio-inline-search">
+					<!-- CONSULTAR CITA — movida arriba del calendario (antes iba
+					     debajo); mismo componente/lógica, solo cambia de lugar y
+					     pasa a ocupar el 100% del ancho disponible (antes limitado
+					     a max-width:280px y centrado). -->
+					<div class="text-center q-mb-lg folio-inline-search full-width">
 						<div class="text-subtitle1 text-pink-2 q-mb-sm">Consultar cita</div>
 
-						<div class="row justify-center items-start q-gutter-sm">
+						<div class="row items-start q-gutter-sm full-width no-wrap">
 							<q-input
 								outlined
 								dark
 								dense
 								color="pink"
 								v-model="folioInlineInput"
-								placeholder="Folio"
-								style="max-width: 280px; width: 100%"
+								placeholder="Ingresa tu folio"
+								class="col"
 								:error="!!folioInlineError"
 								:error-message="folioInlineError"
 								@keyup.enter="submitFolioInline"
@@ -767,6 +771,92 @@
 							/>
 						</div>
 					</div>
+
+					<!-- LEYENDA — después del buscador, antes del calendario (spec
+					     §23/§24). Mismos colores que realmente pinta ThePlanetCalendar.vue
+					     (fc-status-*/fc-block-bloqueado/fc-non-business/fc-timegrid-col) —
+					     no se define una paleta nueva aquí, solo se referencian esos
+					     mismos hex en los estilos de abajo. Si esos colores cambian en
+					     ThePlanetCalendar.vue, actualizar también aquí. Dos secciones
+					     separadas (disponibilidad vs. estatus de la cita, spec §23) y un
+					     ícono de Material Icons por entrada (spec §24), coherente con el
+					     mismo ícono que usa StatusChip.vue/ThePlanetCalendar.vue para cada
+					     estatus. -->
+					<div class="calendar-legend-wrap q-mb-md">
+						<div class="legend-section-title">Disponibilidad</div>
+						<div
+							class="calendar-legend row items-center justify-center q-col-gutter-x-md q-col-gutter-y-xs"
+						>
+							<div class="legend-item">
+								<span class="legend-dot legend-dot-cita" /><q-icon name="event" size="14px" />Cita
+							</div>
+							<div class="legend-item">
+								<span class="legend-dot legend-dot-bloqueado" /><q-icon
+									name="block"
+									size="14px"
+								/>Bloqueado
+							</div>
+							<div class="legend-item">
+								<span class="legend-dot legend-dot-cerrado" /><q-icon name="lock" size="14px" />Cerrado
+							</div>
+							<div class="legend-item">
+								<span class="legend-dot legend-dot-disponible" /><q-icon
+									name="check_circle"
+									size="14px"
+								/>Disponible
+							</div>
+						</div>
+
+						<div class="legend-section-title q-mt-sm">Estatus de la cita</div>
+						<div
+							class="calendar-legend row items-center justify-center q-col-gutter-x-md q-col-gutter-y-xs"
+						>
+							<div class="legend-item">
+								<span class="legend-dot legend-dot-pendiente" /><q-icon
+									name="schedule"
+									size="14px"
+								/>Pendiente
+							</div>
+							<div class="legend-item">
+								<span class="legend-dot legend-dot-confirmada" /><q-icon
+									name="check_circle"
+									size="14px"
+								/>Confirmada
+							</div>
+							<div class="legend-item">
+								<span class="legend-dot legend-dot-cancelada" /><q-icon
+									name="cancel"
+									size="14px"
+								/>Cancelada
+							</div>
+							<div class="legend-item">
+								<span class="legend-dot legend-dot-completada" /><q-icon
+									name="task_alt"
+									size="14px"
+								/>Completada
+							</div>
+							<div class="legend-item">
+								<span class="legend-dot legend-dot-no-show" /><q-icon
+									name="person_off"
+									size="14px"
+								/>No show
+							</div>
+						</div>
+					</div>
+
+					<ThePlanetCalendar
+						:events="calendarEvents"
+						:business-hours="calendarBounds.businessHours"
+						:slot-min-time="calendarBounds.slotMinTime"
+						:slot-max-time="calendarBounds.slotMaxTime"
+						:closed-days-of-week="calendarBounds.closedDaysOfWeek"
+						:blocks="scheduleBlocks"
+						@date-click="handleCalendarDateClick"
+						@event-click="handleCalendarEventClick"
+						@event-drop="handleCalendarEventDrop"
+						@event-resize="handleCalendarEventResize"
+						@select="handleCalendarSelect"
+					/>
 				</section>
 
 				<!-- FOOTER -->
@@ -802,6 +892,7 @@ import ThePlanetCalendar from 'src/components/the_planet/ThePlanetCalendar.vue'
 import StatusChip from 'src/components/the_planet/StatusChip.vue'
 import AgendaApi from 'src/services/the_planet/agenda.api'
 import { buildCalendarBounds } from 'src/utils/agendaSchedule'
+import { formatIsoDateDMY, formatDateDMY } from 'src/utils/date'
 import ServiceApi from 'src/services/service.api'
 import type { AppointmentSummary, PublicAppointmentDetail } from 'src/interfaces/agenda'
 import type { ServiceCategory } from 'src/interfaces/service'
@@ -1129,8 +1220,8 @@ async function loadScheduleBlocks() {
 // 'YYYY-MM-DD' -> 'DD/MM/YYYY' (formato de visualización usado en el resto
 // del flujo de reserva).
 function formatDisplayDate(isoDate) {
-	const [year, month, day] = isoDate.split('-')
-	return `${day}/${month}/${year}`
+	// DD-MM-YYYY (spec §8) — antes DD/MM/YYYY con barras.
+	return formatIsoDateDMY(isoDate)
 }
 
 // Clic sobre una cita del calendario público: NUNCA lleva folio ni datos
@@ -1153,7 +1244,7 @@ function citaDetailFromCalendarEvent(event) {
 		category: event.extendedProps.category,
 		service: event.extendedProps.service,
 		barbero: event.extendedProps.barbero,
-		day: `${pad(start.getDate())}/${pad(start.getMonth() + 1)}/${start.getFullYear()}`,
+		day: formatDateDMY(start),
 		time: `${pad(start.getHours())}:${pad(start.getMinutes())} - ${pad(end.getHours())}:${pad(end.getMinutes())}`,
 	}
 }
@@ -2380,9 +2471,85 @@ html {
 }
 
 .folio-inline-search {
-	max-width: 420px;
-	margin-left: auto;
-	margin-right: auto;
+	/* 100% del ancho disponible de la sección (antes max-width:420px la
+	   dejaba en una caja chica y centrada) — el ancho responsive real ya lo
+	   da el padding de .calendar-section (q-pa-md/q-pa-md-xl), no un límite
+	   fijo aquí. */
+	width: 100%;
+}
+
+/* LEYENDA — discreta, una sola línea en desktop (row + wrap nativo de
+   Quasar hace que pase a 2 líneas solo si no cabe, sin media query
+   dedicada: spec §6 "en celular puede pasar a dos líneas"). Puntos de
+   color en vez de emoji para que el color sea exacto y consistente con
+   ThePlanetCalendar.vue (los emoji varían de tono según el SO). */
+.calendar-legend {
+	font-size: 0.8rem;
+	color: #d1d5db;
+}
+
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.legend-dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	border: 1px solid rgba(255, 255, 255, 0.35);
+	flex-shrink: 0;
+}
+
+/* Mismos hex que ThePlanetCalendar.vue: fc-button/toolbar (cita),
+   fc-block-bloqueado (bloqueado), fc-non-business (cerrado),
+   fc-timegrid-col (disponible), fc-status-cancelada/completada/pendiente. */
+.legend-dot-cita {
+	background: #e91e63;
+}
+
+.legend-dot-bloqueado {
+	background: #f59e0b;
+}
+
+.legend-dot-cerrado {
+	background: #374151;
+}
+
+.legend-dot-disponible {
+	background: #4caf50;
+}
+
+.legend-dot-cancelada {
+	background: #c62828;
+}
+
+.legend-dot-completada {
+	background: #0f9d68;
+}
+
+.legend-dot-pendiente {
+	background: #f9a825;
+}
+
+.legend-dot-confirmada {
+	background: #2e7d32;
+}
+
+.legend-dot-no-show {
+	background: #6a1b9a;
+}
+
+.legend-section-title {
+	text-align: center;
+	font-size: 0.72rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #9ca3af;
+	margin-bottom: 4px;
 }
 
 .carousel-overlay {

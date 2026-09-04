@@ -4,6 +4,7 @@ import Discharge_of_impediments from 'src/router/discharge_of_impediments'
 
 import servicios from 'src/router/administration/Servicios'
 import agenda from 'src/router/administration/Agenda'
+import inicio from 'src/router/administration/Inicio'
 
 import users from 'src/router/administration/Users'
 import binnacle from 'src/router/administration/Binnacle'
@@ -22,7 +23,12 @@ const routes = [
 		name: 'the_planet_init',
 		component: () => import('pages/index_page_the_planet.vue'),
 		beforeEnter: (to, from, next) => {
-			if (sessionStorage.getItem('sistema_token')) {
+			// Comportamiento por defecto sin cambios: sesión activa -> admin.
+			// Excepción explícita (spec §3, botón "Ir a vista pública" en
+			// MainLayout.vue): query.fromAdmin permite a un admin autenticado
+			// entrar a propósito, sin tocar la regla para cualquier otra
+			// entrada (URL directa, bookmark, etc.).
+			if (sessionStorage.getItem('sistema_token') && !to.query.fromAdmin) {
 				next({ name: 'AdministrationMenu' })
 			} else {
 				next()
@@ -64,6 +70,7 @@ const routes = [
 				component: { template: '<div></div>' },
 			}, */
 
+			{ ...inicio },
 			{ ...servicios },
 			{ ...agenda },
 			{ ...users },
@@ -85,8 +92,13 @@ const routes = [
 		redirect: { name: 'AdministrationMenu' },
 	},
 	{
+		// Ruta web inexistente -> vista pública principal (spec §1). No afecta
+		// llamadas a la API (van directo por axios, nunca pasan por vue-router)
+		// ni códigos 401/403/422/500 (esos se manejan en boot/axios.js e
+		// interceptores, no aquí). pages/ErrorNotFound.vue se deja en disco sin
+		// referencias, por si se necesita reactivar.
 		path: '/:catchAll(.*)*',
-		component: () => import('pages/ErrorNotFound.vue'),
+		redirect: { name: 'the_planet_init' },
 	},
 ]
 

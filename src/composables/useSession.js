@@ -21,7 +21,12 @@ const useSession = (data) => {
       if (response.data.success) {
         store.setUser(response.data.user)
         store.setSession(response.data.session)
-        router.push({name:'AdministrationMenu'})
+        // Spec §14: "Inicio" (dashboard) es el módulo inicial del
+        // administrador — antes aterrizaba en el menú de tiles
+        // (AdministrationMenu), que sigue existiendo intacto en
+        // /administracion (no se eliminó nada, solo cambia el destino
+        // post-login).
+        router.push({name:'Inicio'})
       }
 
     }).catch(e => {

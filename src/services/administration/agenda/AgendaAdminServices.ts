@@ -54,8 +54,15 @@ export const WorkingHourApi = {
 }
 
 export const ScheduleBlockApi = {
-	index(): Promise<AxiosResponse<ApiSuccess<ScheduleBlockRecord[]>>> {
-		return axiosInstance.get(`${BASE}/bloqueos`)
+	// filters: spec §12 (fecha día/rango + estado) — reutiliza
+	// ScheduleBlockCatalogService::getAll() ya existente, sin filtro nuevo
+	// en un endpoint aparte.
+	index(filters?: {
+		start?: string
+		end?: string
+		active?: boolean | ''
+	}): Promise<AxiosResponse<ApiSuccess<ScheduleBlockRecord[]>>> {
+		return axiosInstance.get(`${BASE}/bloqueos`, { params: { filters } })
 	},
 	store(data: {
 		date: string
@@ -69,14 +76,24 @@ export const ScheduleBlockApi = {
 	remove(hashId: string): Promise<AxiosResponse<{ success: boolean }>> {
 		return axiosInstance.delete(`${BASE}/bloqueos/${hashId}`)
 	},
+	// Activar/Desactivar (spec §13) — reemplaza remove() en la UI; remove()
+	// se deja intacto (endpoint existente sin usar desde el frontend).
+	toggleActive(hashId: string): Promise<AxiosResponse<ApiSuccess<ScheduleBlockRecord>>> {
+		return axiosInstance.put(`${BASE}/bloqueos/${hashId}/estado`)
+	},
 }
 
 export const AppointmentCalendarApi = {
+	// statuses: búsqueda avanzada (spec §9) — opcional. Sin él, el backend
+	// mantiene su comportamiento de siempre (solo PENDIENTE/CONFIRMADA); con
+	// él, filtra exactamente por los estatus pedidos (incluida CANCELADA/
+	// COMPLETADA/NO_SHOW).
 	index(
 		start: string,
 		end: string,
+		statuses?: AppointmentStatus[],
 	): Promise<AxiosResponse<ApiSuccess<AppointmentCalendarEvent[]>>> {
-		return axiosInstance.get(`${BASE}/citas`, { params: { start, end } })
+		return axiosInstance.get(`${BASE}/citas`, { params: { start, end, statuses } })
 	},
 	updateStatus(
 		hashId: string,
@@ -91,5 +108,27 @@ export const AppointmentCalendarApi = {
 		message: string,
 	): Promise<AxiosResponse<ApiSuccess<AppointmentCalendarEvent>>> {
 		return axiosInstance.put(`${BASE}/citas/${hashId}/mensaje`, { message })
+	},
+	// Guardado unificado del modal "Detalle de la cita" (spec §6) — un solo
+	// botón GUARDAR, una sola petición cuando cambian estatus y/o mensaje.
+	// updateStatus/updateMessage de arriba se conservan, no se eliminan.
+	update(
+		hashId: string,
+		data: { status?: AppointmentStatus | null; message?: string | null },
+	): Promise<AxiosResponse<ApiSuccess<AppointmentCalendarEvent>>> {
+		return axiosInstance.put(`${BASE}/citas/${hashId}`, data)
+	},
+}
+
+// Dashboard de Inicio (spec §14/§16) — conteo real por estatus en el rango
+// seleccionado, sin datos hardcodeados.
+export const DashboardApi = {
+	summary(
+		start: string,
+		end: string,
+	): Promise<
+		AxiosResponse<ApiSuccess<{ total: number; by_status: Record<AppointmentStatus, number> }>>
+	> {
+		return axiosInstance.get(`${BASE}/dashboard`, { params: { start, end } })
 	},
 }

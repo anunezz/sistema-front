@@ -14,13 +14,14 @@
 			flat
 			bordered
 			dense
+			:class="{ 'compact-table': isCompact }"
 			:loading="loading"
 			no-data-label="No hay servicios agendables para este Servicio"
 		>
 			<template v-slot:body="props">
 				<q-tr :props="props">
 					<q-td>{{ props.row.name }}</q-td>
-					<q-td>{{ props.row.duration_minutes }} min</q-td>
+					<q-td v-if="!isCompact">{{ props.row.duration_minutes }} min</q-td>
 					<q-td>{{ formatPrice(props.row.price) }}</q-td>
 					<q-td>
 						<q-chip
@@ -33,7 +34,11 @@
 						</q-chip>
 					</q-td>
 					<q-td align="center">
-						<q-btn-group>
+						<!-- Desktop/tablet grande: botones inline. Compacto (< 1024px):
+						     mismas acciones agrupadas en un menú "⋮" (mismo patrón que
+						     Index.vue/ProductosDeServicio.vue de este módulo) — ninguna
+						     acción se elimina (spec §20). -->
+						<q-btn-group v-if="!isCompact">
 							<q-btn
 								size="sm"
 								color="positive"
@@ -61,6 +66,36 @@
 								<q-tooltip>Eliminar</q-tooltip>
 							</q-btn>
 						</q-btn-group>
+
+						<q-btn v-else round flat color="grey-8" icon="more_vert" size="md">
+							<q-menu anchor="bottom right" self="top right">
+								<q-list style="min-width: 180px">
+									<q-item clickable v-close-popup @click="openEdit(props.row)">
+										<q-item-section avatar
+											><q-icon color="positive" name="edit"
+										/></q-item-section>
+										<q-item-section>Editar</q-item-section>
+									</q-item>
+									<q-item clickable v-close-popup @click="toggleActive(props.row)">
+										<q-item-section avatar>
+											<q-icon
+												:color="props.row.active ? 'warning' : 'primary'"
+												:name="props.row.active ? 'block' : 'check_circle'"
+											/>
+										</q-item-section>
+										<q-item-section>{{
+											props.row.active ? 'Desactivar' : 'Activar'
+										}}</q-item-section>
+									</q-item>
+									<q-item clickable v-close-popup @click="confirmRemove(props.row)">
+										<q-item-section avatar
+											><q-icon color="negative" name="delete"
+										/></q-item-section>
+										<q-item-section>Eliminar</q-item-section>
+									</q-item>
+								</q-list>
+							</q-menu>
+						</q-btn>
 					</q-td>
 				</q-tr>
 			</template>
@@ -127,7 +162,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Dialog, Notify } from 'quasar'
+import { Dialog, Notify, useQuasar } from 'quasar'
 import type { QForm, QTableColumn } from 'quasar'
 import HeaderSection from 'components/HeaderSection.vue'
 import DeleteAlert from 'components/DeleteAlert.vue'
@@ -155,13 +190,29 @@ const pageTitle = computed(() => `SERVICIOS / SERVICIOS AGENDABLES / ${categoryT
 const rows = ref<AppointmentServiceRecord[]>([])
 const loading = ref(false)
 
-const columns: QTableColumn<AppointmentServiceRecord>[] = [
-	{ name: 'name', label: 'Servicio agendable', field: 'name', align: 'left' },
-	{ name: 'duration', label: 'Duración', field: 'duration_minutes', align: 'left' },
-	{ name: 'price', label: 'Precio', field: 'price', align: 'left' },
-	{ name: 'active', label: 'Estado', field: 'active', align: 'left' },
-	{ name: 'actions', label: 'Acciones', field: () => '', align: 'center' },
-]
+// Mismo criterio responsive que Index.vue/ProductosDeServicio.vue de este
+// mismo módulo (spec §20): en compacto se oculta "Duración" (menos crítica)
+// y las 3 acciones se agrupan en un menú "⋮" en vez de desaparecer.
+const $q = useQuasar()
+const isCompact = computed(() => $q.screen.lt.md)
+
+const columns = computed<QTableColumn<AppointmentServiceRecord>[]>(() => {
+	const cols: QTableColumn<AppointmentServiceRecord>[] = [
+		{ name: 'name', label: 'Servicio agendable', field: 'name', align: 'left' },
+	]
+
+	if (!isCompact.value) {
+		cols.push({ name: 'duration', label: 'Duración', field: 'duration_minutes', align: 'left' })
+	}
+
+	cols.push(
+		{ name: 'price', label: 'Precio', field: 'price', align: 'left' },
+		{ name: 'active', label: 'Estado', field: 'active', align: 'left' },
+		{ name: 'actions', label: 'Acciones', field: () => '', align: 'center' },
+	)
+
+	return cols
+})
 
 const formatPrice = (price: string | number | null) => {
 	if (price === null || price === undefined || price === '') return '—'
@@ -287,5 +338,18 @@ onMounted(async () => {
 .servicio-modal-header {
 	background: linear-gradient(to bottom, #611232, #9b2247);
 	padding: 16px 20px;
+}
+
+/* Mismo patrón que Index.vue/ProductosDeServicio.vue de este módulo. */
+.compact-table :deep(table) {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.compact-table :deep(th),
+.compact-table :deep(td) {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 </style>

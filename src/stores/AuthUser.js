@@ -30,7 +30,16 @@ export const useAuthUserStore = defineStore('auth', {
           this.setUser(response.data.user);
         }).catch(error => {
         console.log('error', error)
-        this.logout();
+        // Solo cerrar sesión si el backend realmente rechazó el token
+        // (401: token inválido/revocado, ver Auth\AuthController::getUserInfo).
+        // Cualquier otro error (500 transitorio, timeout, red caída) NO debe
+        // destruir una sesión que sigue siendo válida — antes se hacía
+        // logout() sin mirar el status, lo que expulsaba al usuario en cada
+        // refresh de página que coincidiera con un hipo de red/servidor
+        // (causa real del "a veces se cierra sesión sola" reportado).
+        if (error.response && error.response.status === 401) {
+          this.logout();
+        }
       })
     },
 
