@@ -155,14 +155,34 @@ const pad2 = (n) => String(n).padStart(2, '0')
 
 const toIsoDateLocal = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 
-// Un día está "CERRADO" si: (a) ese día de la semana no tiene horario de
-// atención activo (closedDaysOfWeek, viene de WorkingHour real — antes
-// hardcodeado solo a domingo), o (b) existe un bloqueo de día completo
-// (ScheduleBlock.all_day=true) para esa fecha exacta — ver
-// .claude/skills/agenda/ §2 "Bloqueos de disponibilidad".
-function isDayFullyClosed(dateObj) {
-	if (props.closedDaysOfWeek.includes(dateObj.getDay())) return true
+// Spec §24: "NO utilizar emojis si el sistema ya utiliza Material Icons" —
+// el resto del sistema (StatusChip.vue, botones administrativos) usa
+// Material Icons vía Quasar. Este componente inyecta HTML crudo en el DOM
+// de FullCalendar (dayCellContent/dayHeaderContent/eventDidMount, no son
+// templates de Vue), así que el ícono se arma como texto del webfont
+// 'Material Icons' en vez de <q-icon>.
+const iconSpan = (name, size = 12) =>
+	`<i class="material-icons" style="font-size:${size}px;vertical-align:-2px">${name}</i>`
 
+// Escapa texto libre (p. ej. el motivo de un bloqueo) antes de insertarlo
+// como innerHTML — defensa en profundidad, aunque el backend ya sanitiza
+// (CleanText cast en ScheduleBlock::reason).
+const escapeHtml = (text) =>
+	String(text).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch])
+
+// CERRADO y BLOQUEADO son conceptos distintos (mejora visual solicitada,
+// antes ambos se pintaban igual bajo "isDayFullyClosed"/"CERRADO"):
+//   - CERRADO: ese día de la semana no tiene horario de atención activo
+//     (closedDaysOfWeek, viene de WorkingHour real).
+//   - BLOQUEADO: existe un bloqueo puntual de día completo (ScheduleBlock
+//     con all_day=true) para esa fecha exacta — el negocio SÍ trabaja ese
+//     día de la semana, pero un admin bloqueó esa fecha en particular.
+// Ver .claude/skills/agenda/ §2 "Bloqueos de disponibilidad".
+function isDayClosedBySchedule(dateObj) {
+	return props.closedDaysOfWeek.includes(dateObj.getDay())
+}
+
+function isDayBlockedAllDay(dateObj) {
 	const iso = toIsoDateLocal(dateObj)
 
 	return props.blocks.some(
@@ -198,15 +218,18 @@ const calendarOptions = computed(() => ({
 	businessHours: props.businessHours,
 
 	// Citas reales + bloqueos activos pintados como franjas de fondo
-	// "CERRADO" (ver eventDidMount/eventClassNames más abajo) — un solo
-	// arreglo de eventos, FullCalendar los distingue por "display".
+	// "BLOQUEADO" (ver eventDidMount/eventClassNames más abajo) — un solo
+	// arreglo de eventos, FullCalendar los distingue por "display". Un
+	// ScheduleBlock siempre es "BLOQUEADO" (nunca "CERRADO" — ver
+	// isDayClosedBySchedule/isDayBlockedAllDay más arriba), color ámbar
+	// propio, distinto del gris de "fuera de horario".
 	events: [
 		...props.events,
 		...props.blocks.map((block) => ({
 			start: String(block.starts_at).replace(' ', 'T'),
 			end: String(block.ends_at).replace(' ', 'T'),
 			display: 'background',
-			classNames: ['fc-block-closed'],
+			classNames: ['fc-block-bloqueado'],
 			extendedProps: { reason: block.reason },
 		})),
 	],
@@ -317,13 +340,19 @@ const calendarOptions = computed(() => ({
 			showNonCurrentDates: false,
 
 			dayCellDidMount(info) {
-				if (isDayFullyClosed(info.date)) {
-					info.el.style.background = 'rgba(120,120,130,0.18)'
+				// CERRADO (gris slate #374151, sin horario ese día) y BLOQUEADO
+				// (ámbar #F59E0B, día puntual bloqueado por un admin) ya NO
+				// comparten el mismo tratamiento visual — ver isDayClosedBySchedule/
+				// isDayBlockedAllDay.
+				if (isDayClosedBySchedule(info.date)) {
+					info.el.style.background = 'rgba(55, 65, 81, 0.45)'
+				} else if (isDayBlockedAllDay(info.date)) {
+					info.el.style.background = 'rgba(245, 158, 11, 0.16)'
 				}
 			},
 
 			dayCellContent: (arg) => {
-				if (isDayFullyClosed(arg.date)) {
+				if (isDayClosedBySchedule(arg.date)) {
 					return {
 						html: `
               <div style="
@@ -336,12 +365,37 @@ const calendarOptions = computed(() => ({
                 <div>${arg.dayNumberText}</div>
 
                 <div style="
-                  color:#9e9e9e;
+                  color:#9ca3af;
                   font-size:11px;
                   font-weight:bold;
                   margin-top:4px;
                 ">
-                  CERRADO
+                  ${iconSpan('lock')} CERRADO
+                </div>
+              </div>
+            `,
+					}
+				}
+
+				if (isDayBlockedAllDay(arg.date)) {
+					return {
+						html: `
+              <div style="
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                justify-content:center;
+                height:100%;
+              ">
+                <div>${arg.dayNumberText}</div>
+
+                <div style="
+                  color:#f59e0b;
+                  font-size:11px;
+                  font-weight:bold;
+                  margin-top:4px;
+                ">
+                  ${iconSpan('block')} BLOQUEADO
                 </div>
               </div>
             `,
@@ -355,15 +409,25 @@ const calendarOptions = computed(() => ({
 		},
 	},
 
-	// Día cerrado (sin horario activo ese día de semana, o bloqueo de día
-	// completo) también en la cabecera de día/semana.
+	// Mismo criterio CERRADO vs BLOQUEADO en la cabecera de Vista Día/Semana.
 	dayHeaderContent: (arg) => {
-		if (isDayFullyClosed(arg.date)) {
+		if (isDayClosedBySchedule(arg.date)) {
 			return {
 				html: `
           <div class="fc-planet-header-closed">
             <div>${arg.text}</div>
-            <div class="fc-planet-header-closed-label">CERRADO</div>
+            <div class="fc-planet-header-closed-label">${iconSpan('lock')} CERRADO</div>
+          </div>
+        `,
+			}
+		}
+
+		if (isDayBlockedAllDay(arg.date)) {
+			return {
+				html: `
+          <div class="fc-planet-header-closed">
+            <div>${arg.text}</div>
+            <div class="fc-planet-header-bloqueado-label">${iconSpan('block')} BLOQUEADO</div>
           </div>
         `,
 			}
@@ -391,12 +455,16 @@ const calendarOptions = computed(() => ({
 		if (arg.event.display === 'background') {
 			const label = document.createElement('div')
 
-			label.className = 'fc-block-closed-label'
+			label.className = 'fc-block-bloqueado-label'
 
-			// "CERRADO" + motivo real del bloqueo (spec §2/§3) — nunca un
-			// texto genérico cuando sí hay un motivo capturado.
+			// "BLOQUEADO" (ScheduleBlock, nunca "CERRADO" — ver §3 de la mejora
+			// visual) + motivo real del bloqueo cuando existe. innerHTML (no
+			// textContent) porque ahora lleva el ícono de Material Icons —
+			// reason pasa por escapeHtml() antes de insertarse (spec §24).
 			const reason = arg.event.extendedProps?.reason
-			label.textContent = reason ? `CERRADO - ${reason}` : 'CERRADO'
+			label.innerHTML = reason
+				? `${iconSpan('block')} BLOQUEADO - ${escapeHtml(reason)}`
+				: `${iconSpan('block')} BLOQUEADO`
 
 			arg.el.appendChild(label)
 			return
@@ -522,15 +590,19 @@ defineExpose({
 
 /* Disponible: horario dentro del negocio (fondo base de los slots de
    Día/Semana). Verde suave pero con suficiente contraste para distinguirse
-   a simple vista del resto de estados. */
+   a simple vista del resto de estados — zona intencionalmente "limpia"
+   (sin textura), el calendario no debe verse saturado de color. */
 .planet-calendar-card :deep(.fc-timegrid-col) {
-	background: rgba(76, 175, 80, 0.16);
+	background: rgba(76, 175, 80, 0.14);
 }
 
-/* Fuera de horario laboral / domingo cerrado — bien oscuro para que
-   contraste con el verde de "disponible" */
+/* CERRADO: fuera de horario laboral / día sin horario activo. Gris slate
+   (#374151, mismo tono que la variante de Vista Mes/cabecera) — a
+   propósito NO es rojo/negro puro ni comparte tono con BLOQUEADO (ámbar,
+   ver .fc-block-bloqueado) para que ambos estados se puedan distinguir de
+   un vistazo. */
 .planet-calendar-card :deep(.fc-non-business) {
-	background: rgba(45, 45, 52, 0.85) !important;
+	background: rgba(55, 65, 81, 0.55) !important;
 }
 
 /* Vista Mes: solo el mes actual — los días de meses adyacentes quedan
@@ -569,8 +641,11 @@ defineExpose({
 
 /* Colores por estatus de cita — consistentes en vista pública y
    administrativa (mismo componente, ver .claude/skills/agenda/ §5):
-   PENDIENTE=amarillo, CONFIRMADA=verde, CANCELADA=rojo, COMPLETADA=azul,
-   NO_SHOW=morado (distinguible de los 4 anteriores). */
+   PENDIENTE=dorado/amarillo, CONFIRMADA=verde bosque, CANCELADA=rojo,
+   COMPLETADA=verde esmeralda (tono distinto de CONFIRMADA para no
+   confundirlos), NO_SHOW=morado. Identidad de marca (negro/dorado/rosa)
+   se conserva en toolbar/botones — estos colores son semánticos, solo para
+   diferenciar estados de cita. */
 .planet-calendar-card :deep(.fc-status-pendiente) {
 	background: linear-gradient(135deg, #f9a825, #ffca28) !important;
 	color: #212121 !important;
@@ -590,34 +665,68 @@ defineExpose({
 }
 
 .planet-calendar-card :deep(.fc-status-completada) {
-	background: linear-gradient(135deg, #1565c0, #64b5f6) !important;
+	background: linear-gradient(135deg, #0f9d68, #34d399) !important;
 }
 
 .planet-calendar-card :deep(.fc-status-no_show) {
 	background: linear-gradient(135deg, #6a1b9a, #ab47bc) !important;
 }
 
-/* Bloqueo (ScheduleBlock activo) pintado como franja de fondo "CERRADO" —
-   distinta de "fuera de horario" (fc-non-business) para no confundir un
-   bloqueo puntual con la ausencia de horario configurado. */
-.planet-calendar-card :deep(.fc-block-closed) {
+/* Cita: además del color por estatus, un ícono de Material Icons coherente
+   con ese estatus (spec §24/§25 — antes una tijera emoji genérica igual
+   para cualquier estatus; ahora coincide con StatusChip.vue/
+   utils/agendaStatus.ts: schedule/check_circle/cancel/task_alt/person_off).
+   No aplica a los eventos de fondo (BLOQUEADO), que no tienen
+   .fc-event-title. */
+.planet-calendar-card :deep(.fc-event-title)::before {
+	font-family: 'Material Icons';
+	font-size: 13px;
+	vertical-align: -2px;
+	margin-right: 2px;
+}
+
+.planet-calendar-card :deep(.fc-status-pendiente .fc-event-title)::before {
+	content: 'schedule';
+}
+
+.planet-calendar-card :deep(.fc-status-confirmada .fc-event-title)::before {
+	content: 'check_circle';
+}
+
+.planet-calendar-card :deep(.fc-status-cancelada .fc-event-title)::before {
+	content: 'cancel';
+}
+
+.planet-calendar-card :deep(.fc-status-completada .fc-event-title)::before {
+	content: 'task_alt';
+}
+
+.planet-calendar-card :deep(.fc-status-no_show .fc-event-title)::before {
+	content: 'person_off';
+}
+
+/* BLOQUEADO (ScheduleBlock activo): franja de fondo ámbar/naranja, textura
+   diagonal PROPIA y distinta de la de CERRADO (fc-non-business, gris
+   slate sólido sin textura) — antes ambos compartían el mismo gris y el
+   mismo texto "CERRADO", que es justo la confusión que pedía corregirse. */
+.planet-calendar-card :deep(.fc-block-bloqueado) {
 	background: repeating-linear-gradient(
 		45deg,
-		rgba(66, 66, 70, 0.6),
-		rgba(66, 66, 70, 0.6) 10px,
-		rgba(40, 40, 44, 0.6) 10px,
-		rgba(40, 40, 44, 0.6) 20px
+		rgba(245, 158, 11, 0.55),
+		rgba(245, 158, 11, 0.55) 10px,
+		rgba(180, 108, 0, 0.5) 10px,
+		rgba(180, 108, 0, 0.5) 20px
 	) !important;
 }
 
-.planet-calendar-card :deep(.fc-block-closed-label) {
+.planet-calendar-card :deep(.fc-block-bloqueado-label) {
 	position: absolute;
 	top: 2px;
 	left: 4px;
 	font-size: 10px;
 	font-weight: bold;
 	letter-spacing: 0.5px;
-	color: #e0e0e0;
+	color: #fff3e0;
 	pointer-events: none;
 }
 
@@ -640,7 +749,13 @@ defineExpose({
 }
 
 .planet-calendar-card :deep(.fc-planet-header-closed-label) {
-	color: #9e9e9e;
+	color: #9ca3af;
+	font-size: 10px;
+	font-weight: bold;
+}
+
+.planet-calendar-card :deep(.fc-planet-header-bloqueado-label) {
+	color: #f59e0b;
 	font-size: 10px;
 	font-weight: bold;
 }

@@ -9,7 +9,7 @@
 		<q-list class="menu-list">
 			<template v-for="(menuItem, index) in link.childs" :key="index">
 				<q-item
-					v-if="authStore.hasPermission(menuItem.permission)"
+					v-if="!menuItem.permission || authStore.hasPermission(menuItem.permission)"
 					clickable
 					v-ripple
 					tag="router-link"
@@ -67,9 +67,15 @@ const menuList = ref([
 		moduleName: '',
 		childs: [
 			{
+				// Apuntaba a AdministrationMenu (menú de tiles) — spec §14:
+				// "Inicio" ahora es el dashboard real. AdministrationMenu sigue
+				// intacto y accesible directamente en /administracion, solo deja
+				// de ser el destino de este ítem del menú (mismo criterio que el
+				// bug ya documentado arriba de Agenda/Contacto: corregir el
+				// routeName del ítem existente, no crear uno nuevo).
 				icon: 'fa-solid fa-inbox',
 				moduleName: 'Inicio',
-				routeName: 'AdministrationMenu',
+				routeName: 'Inicio',
 				color: '#FFFFFF',
 				backgroundColor: '#343434',
 			},

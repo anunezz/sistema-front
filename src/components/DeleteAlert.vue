@@ -3,7 +3,7 @@
 		<q-card flat bordered>
 			<q-item>
 				<q-item-section avatar>
-					<q-avatar :icon="icon" color="red" text-color="white"/>
+					<q-avatar :icon="icon" color="red" text-color="white" :style="avatarStyle"/>
 				</q-item-section>
 
 				<q-item-section>
@@ -53,6 +53,15 @@ export default {
       required: true,
       type: String,
       default: 'Deshabilitar'
+    },
+    // Override opcional del color del ícono (por defecto sigue siendo el
+    // "red" de siempre para no afectar a ningún módulo existente). Agenda lo
+    // usa para que sus confirmaciones usen el mismo color de cabecera que el
+    // header administrativo (ver spec §4 / CalendarioTab.vue).
+    avatarStyle: {
+      required: false,
+      type: [String, Object],
+      default: null
     }
   },
   emits: [

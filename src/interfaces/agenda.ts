@@ -60,6 +60,18 @@ export const APPOINTMENT_STATUSES = [
 
 export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number]
 
+// Mensaje sugerido al cliente según el estatus elegido (spec §7) — solo
+// rellena el campo "Mensaje para el cliente" en el modal de detalle, el
+// admin puede editarlo antes de guardar. No es una regla de negocio del
+// backend, es UX; vive aquí para no duplicarlo si otra vista lo necesita.
+export const APPOINTMENT_STATUS_SUGGESTED_MESSAGE: Record<AppointmentStatus, string> = {
+	PENDIENTE: 'Tu cita se encuentra pendiente de confirmación.',
+	CONFIRMADA: 'Tu cita ha sido confirmada. Te esperamos en The Planet Studio.',
+	CANCELADA: 'Tu cita ha sido cancelada correctamente.',
+	COMPLETADA: 'Tu cita ha sido marcada como completada. ¡Gracias por visitarnos!',
+	NO_SHOW: 'Tu cita fue registrada como no presentada.',
+}
+
 export interface AppointmentSummary {
 	hash_id: string
 	folio: string
@@ -100,6 +112,7 @@ export interface AppointmentCalendarEvent {
 		duration_minutes: number | null
 		created_by_admin: boolean
 		created_at: string | null
+		updated_at: string | null
 		admin_message: string | null
 	}
 }
